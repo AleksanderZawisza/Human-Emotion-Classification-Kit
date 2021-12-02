@@ -4,7 +4,7 @@ from tkinter import ttk
 LARGEFONT = ("Verdana", 35)
 
 
-class tkinterApp(tk.Tk):
+class TkinterApp(tk.Tk):
 
     # __init__ function for class tkinterApp
     def __init__(self, *args, **kwargs):
@@ -44,7 +44,7 @@ class StartPage(tk.Frame):
         tk.Frame.__init__(self, parent)
 
         # label of frame Layout 2
-        label = ttk.Label(self, text="Startpage", font=LARGEFONT)
+        label = ttk.Label(self, text="Start Page", font=LARGEFONT)
 
         # putting the grid in its place by using grid
         label.grid(row=0, column=4, padx=10, pady=10)
@@ -55,7 +55,7 @@ class StartPage(tk.Frame):
         # putting the button in its place by using grid
         button1.grid(row=1, column=1, padx=10, pady=10)
 
-        ## button to show frame 2 with text layout2
+        # button to show frame 2 with text layout2
         button2 = ttk.Button(self, text="Page 2",
                              command=lambda: controller.show_frame(Page2))
 
@@ -110,5 +110,5 @@ class Page2(tk.Frame):
 
 if __name__ == "__main__":
     # Driver Code
-    app = tkinterApp()
+    app = TkinterApp()
     app.mainloop()
