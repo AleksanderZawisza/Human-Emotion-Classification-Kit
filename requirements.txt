@@ -1,2 +1,5 @@
 #python==3.7
 pysimplegui==4.55.1
+numpy==1.21.4
+opencv-python==4.5.4.60
+pillow==8.4.0
