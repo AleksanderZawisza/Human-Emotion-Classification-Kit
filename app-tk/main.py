@@ -1,10 +1,10 @@
 import tkinter as tk
 # from tkinter import ttk
 
-from app.load_page import LoadPage
-from app.base_page import BasePage
-from app.prediction_page import PredictionPage
-from app.settings_page import SettingsPage
+from load_page import LoadPage
+from base_page import BasePage
+from prediction_page import PredictionPage
+from settings_page import SettingsPage
 
 
 class TkinterApp(tk.Tk):

@@ -1,9 +1,9 @@
 import tkinter as tk
 from tkinter import ttk
 
-from app.load_page import LoadPage
-from app.settings_page import SettingsPage
-from app.prediction_page import PredictionPage
+from load_page import LoadPage
+from settings_page import SettingsPage
+from prediction_page import PredictionPage
 
 LARGEFONT = ("Verdana", 30)
 
