@@ -23,13 +23,13 @@ def load_layout():
 
     # For now will only show the name of the file that was chosen
     image_viewer_column = [[sg.Frame('Loaded folders/files:',
-                                     [[sg.Listbox(values=[], enable_events=True, size=(50, 8),
-                                       key="-LOADED LIST-", horizontal_scroll=True,
+                                     [[sg.Listbox(values=[], enable_events=True, size=(50, 8), key="-LOADED LIST-",
+                                                  horizontal_scroll=True,
                                        highlight_background_color='#81b2db')],
                                       [sg.Button('Unload selected', enable_events=True, key="-DELETE-")]],
                                      border_width=0, element_justification='center'),],
                            [sg.Frame('Image preview',[[sg.Image(key="-IMAGE-")]],
-                                     size=(400, 320), border_width=0, pad=(5,5),
+                                     size=(400, 320), border_width=0, pad=(0, 0),
                                      element_justification='center')],
                            ]
 
@@ -47,7 +47,7 @@ def load_layout():
 
     return layout
 
-def load_loop(window):
+def load_loop(window, loaded_stuff):
     # window = sg.Window("Dataset/Image Loader", layout, element_justification='center',
     #                    size=(800, 600))
 
@@ -57,7 +57,7 @@ def load_loop(window):
 
         if event == "Back":
             BackEvent(window)
-            break
+            return loaded_stuff
 
         if event == "Exit" or event == sg.WIN_CLOSED:
             break
@@ -65,7 +65,6 @@ def load_loop(window):
         # Folder name was filled in, make a list of files in the folder
         if event == "-FOLDER-":
             folder = values["-FOLDER-"]
-
             # WYSWIETLANIE ZDJEC Z PIL
             try:
                 # Get list of files in folder
@@ -78,14 +77,17 @@ def load_loop(window):
                 and f.lower().endswith(('.png', '.jpg', '.jpeg', '.tiff', '.bmp', '.gif'))]
             window["-FILE LIST-"].update(fnames)
 
-        elif event == "-FILE LIST-":  # A file was chosen from the listbox
+        elif event == "-FILE LIST-" or event == '-LOADED LIST-':  # A file was chosen from the listbox
             try:
-                filename = os.path.join(values["-FOLDER-"], values["-FILE LIST-"][0])
+                if event == "-FILE LIST-":
+                    filename = os.path.join(values["-FOLDER-"], values["-FILE LIST-"][0])
+                if event == '-LOADED LIST-':
+                    filename = values["-LOADED LIST-"][0]
                 try:
                     im = Image.open(filename)
                 except:
-                    return
-                width, height = (400, 320)
+                    pass
+                width, height = (340, 300)
                 scale = max(im.width / width, im.height / height)
                 if scale > 1:
                     w, h = int(im.width / scale), int(im.height / scale)
@@ -97,10 +99,34 @@ def load_loop(window):
             except:
                 pass
 
+        elif event == "-LOAD FOLDER-":
+            try:
+                folder = values["-FOLDER-"]
+                if os.path.isdir(folder) and folder not in loaded_stuff:
+                    loaded_stuff.append(folder)
+                    window["-LOADED LIST-"].update(loaded_stuff)
+            except:
+                pass
 
+        elif event == "-LOAD IMAGE-":
+            try:
+                folder = values["-FOLDER-"]
+                file = values["-FILE LIST-"][0]
+                filename = f"{folder}/{file}"
+                if os.path.isfile(filename) and filename not in loaded_stuff:
+                    loaded_stuff.append(filename)
+                    window["-LOADED LIST-"].update(loaded_stuff)
+            except:
+                pass
 
-
-
+        elif event == "-DELETE-":
+            try:
+                stuff_to_delete = values["-LOADED LIST-"][0]
+                if stuff_to_delete in loaded_stuff:
+                    loaded_stuff.remove(stuff_to_delete)
+                    window["-LOADED LIST-"].update(loaded_stuff)
+            except:
+                pass
 
 if __name__ == "__main__":
     layout = load_layout()

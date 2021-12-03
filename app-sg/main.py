@@ -34,6 +34,7 @@ class HECKApp:
                            size=(800, 600))
 
         layout = 1
+        loaded_stuff = []
         while True:
             event, values = window.read()
             print(event, values)
@@ -45,7 +46,7 @@ class HECKApp:
             if event == 'Load images':
                 window[f'-COL1-'].update(visible=False)
                 window[f'-COL2-'].update(visible=True)
-                load_loop(window)
+                loaded_stuff = load_loop(window, loaded_stuff)
             if event == 'Prediction settings':
                 window[f'-COL1-'].update(visible=False)
                 window[f'-COL3-'].update(visible=True)
