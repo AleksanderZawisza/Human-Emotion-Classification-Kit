@@ -1,14 +1,13 @@
-# img_viewer.py
 import PySimpleGUI as sg
 import os.path
 from PIL import Image
 from io import BytesIO
-import cv2 as cv
+from utils import BackEvent
 
-def img_viewer():
-    sg.theme("DefaultNoMoreNagging")
-    sg.theme_button_color((('blue', '#b8cde0')))
-    sg.set_options(font=('Courier New', 10))
+def load_layout():
+    # sg.theme("DefaultNoMoreNagging")
+    # sg.theme_button_color((('blue', '#b8cde0')))
+    # sg.set_options(font=('Courier New', 10))
 
     # First the window layout in 2 columns
     file_list_column = [[sg.Text("Folder"),
@@ -30,7 +29,7 @@ def img_viewer():
                                       [sg.Button('Unload selected', enable_events=True, key="-DELETE-")]],
                                      border_width=0, element_justification='center'),],
                            [sg.Frame('Image preview',[[sg.Image(key="-IMAGE-")]],
-                                     size=(400, 325), border_width=0, pad=(5,5),
+                                     size=(400, 320), border_width=0, pad=(5,5),
                                      element_justification='center')],
                            ]
 
@@ -42,18 +41,24 @@ def img_viewer():
                sg.VSeperator(),
                col2]], pad=(0,0), border_width=0)],
               [sg.Frame("", [[
-                  sg.Button('Back', enable_events=True, key="-MENU-", size=(14,2))]],
+                  sg.Button('Back', enable_events=True, size=(10,1), font=('Courier New', 12))]],
                         element_justification='center', border_width=0, pad=(0, 0),
                         vertical_alignment='bottom') ],]
 
-    window = sg.Window("Image Viewer", layout, element_justification='center',
-                       size=(800, 600))
+    return layout
 
-
+def load_loop(window):
+    # window = sg.Window("Dataset/Image Loader", layout, element_justification='center',
+    #                    size=(800, 600))
 
     # Run the Event Loop
     while True:
         event, values = window.read()
+
+        if event == "Back":
+            BackEvent(window)
+            break
+
         if event == "Exit" or event == sg.WIN_CLOSED:
             break
 
@@ -80,7 +85,7 @@ def img_viewer():
                     im = Image.open(filename)
                 except:
                     return
-                width, height = (400, 325)
+                width, height = (400, 320)
                 scale = max(im.width / width, im.height / height)
                 if scale > 1:
                     w, h = int(im.width / scale), int(im.height / scale)
@@ -92,8 +97,13 @@ def img_viewer():
             except:
                 pass
 
-    window.close()
+
+
+
 
 
 if __name__ == "__main__":
-    img_viewer()
+    layout = load_layout()
+    window = sg.Window("Dataset/Image Loader", layout, element_justification='center',
+                        size=(800, 600))
+    load_loop(window)

@@ -16,3 +16,9 @@ layout1 = [[sg.Text('Below is a column that is 500 x 300')],
           [sg.Text('With the interior centered')],
           [ColumnFixedSize(col_interior1, size=(800, 600), background_color='grey', element_justification='c',
                            vertical_alignment='t')]]
+
+def BackEvent(window):
+    window[f'-COL2-'].update(visible=False)
+    window[f'-COL3-'].update(visible=False)
+    window[f'-COL4-'].update(visible=False)
+    window[f'-COL1-'].update(visible=True)
