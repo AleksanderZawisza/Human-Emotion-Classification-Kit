@@ -1,5 +1,6 @@
 import PySimpleGUI as sg
 from settings_page import settings_layout
+from base_page import base_layout
 
 # from utils import ColumnFixedSize
 
@@ -11,11 +12,7 @@ class HECKApp:
         sg.set_options(font=('Courier New', 10))
 
         # ----------- Create all the layouts this Window will display -----------
-        layout1 = [[sg.Text('Human Emotion Classification Kit', font=('Courier New', 25), pad=((0, 0), (70, 0)))],
-                   [sg.HSep(pad=((0, 0), (0, 20)))],
-                   [sg.Button('Prediction demo', size=(30, 2), pad=((0, 0), (50, 0)), font=('Courier New', 14))],
-                   [sg.Button('Load images', size=(30, 2), pad=((0, 0), (50, 0)), font=('Courier New', 14))],
-                   [sg.Button('Prediction settings', size=(30, 2), pad=((0, 0), (50, 0)), font=('Courier New', 14))]]
+        layout1 = base_layout()
 
         layout2 = [[sg.Text('Load Page interior')],
                    [sg.Button('Back')]]
