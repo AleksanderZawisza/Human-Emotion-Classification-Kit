@@ -8,3 +8,14 @@ def base_layout():
               [sg.Button('Load images', size=(30, 2), pad=((0, 0), (50, 0)), font=('Courier New', 14))],
               [sg.Button('Prediction settings', size=(30, 2), pad=((0, 0), (50, 0)), font=('Courier New', 14))]]
     return layout
+
+
+if __name__ == "__main__":
+    layout = base_layout()
+    window = sg.Window("Base Page", layout, element_justification='center',
+                       size=(800, 600))
+    while True:
+        event, values = window.read()
+        if event == "Exit" or event == sg.WIN_CLOSED:
+            break
+    window.close()
