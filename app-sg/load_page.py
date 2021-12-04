@@ -15,10 +15,13 @@ def load_layout():
                          sg.In(size=(28, 1), enable_events=True, key="-FOLDER-"),
                          sg.FolderBrowse(),
                          ],
+                        [sg.Text("Filter"), sg.Input(size=(28, 1), enable_events=True, key="-FILTER-",
+                                                     pad=((0, 70), (0, 0)))],
                         [sg.Button('Load Image', enable_events=True, key="-LOAD IMAGE-"),
+                         sg.Button('Load Filtered', enable_events=True, key="-LOAD FILTERED-"),
                          sg.Button('Load Folder', enable_events=True, key="-LOAD FOLDER-"),
-                          ],
-                        [sg.Listbox(values=[], enable_events=True, size=(42, 22), key="-FILE LIST-",
+                         ],
+                        [sg.Listbox(values=[], enable_events=True, size=(42, 21), key="-FILE LIST-",
                                     horizontal_scroll=True, highlight_background_color='#81b2db')
                          ],
                         ]
@@ -39,7 +42,7 @@ def load_layout():
                                      element_justification='center')],
                            ]
 
-    col1 = sg.Column(file_list_column, size=(370, 470), element_justification='center')
+    col1 = sg.Column(file_list_column, size=(370, 475), element_justification='center')
     col2 = sg.Column(image_viewer_column, pad=(20, 3), vertical_alignment='top', element_justification='center')
 
     # ----- Full layout -----
@@ -65,6 +68,8 @@ def load_loop(window, loaded_stuff):
     # Run the Event Loop
     while True:
         event, values = window.read()
+        print(event, values)
+        print(window['-FILE LIST-'].get_list_values())
 
         if event == "Exit" or event == sg.WIN_CLOSED:
             break
@@ -85,20 +90,45 @@ def load_loop(window, loaded_stuff):
 
             fnames = [f for f in file_list
                       if os.path.isfile(os.path.join(folder, f))
-                      and f.lower().endswith(('.png', '.jpg', '.jpeg', '.tiff', '.bmp', '.gif'))]
+                      and f.lower().endswith(('.png', '.jpg', '.jpeg', '.tiff', '.bmp'))]
+            window["-FILE LIST-"].update(fnames)
+            event = "-FILTER-"
             if len(fnames)==0:
-                sg.popup_error('No images in folder!')
+                sg.PopupOK('No images found in folder!', title='SORRY')
                 noImagesInFolder = True
             else:
                 noImagesInFolder = False
-            window["-FILE LIST-"].update(fnames)
 
-        elif event == "-FILE LIST-" or event == '-LOADED LIST-':  # A file was chosen from the listbox
+        if event == "-FILTER-":
+            if values['-FOLDER-']:
+                folder = values["-FOLDER-"]
+                # WYSWIETLANIE ZDJEC Z PIL
+                try:
+                    file_list = os.listdir(folder)
+                except:
+                    file_list = []
+
+                fnames = [f for f in file_list
+                          if os.path.isfile(os.path.join(folder, f))
+                          and f.lower().endswith(('.png', '.jpg', '.jpeg', '.tiff', '.bmp'))]
+                currentFolderFiles = fnames
+            if currentFolderFiles:
+                search = values['-FILTER-']
+                new_values = [x for x in currentFolderFiles if search.lower() in x.lower()]  # do the filtering
+                window['-FILE LIST-'].update(new_values)  # display in the listbox
+
+        if event == "-FILE LIST-" or event == '-LOADED LIST-':  # A file was chosen from the listbox
             try:
                 if event == "-FILE LIST-":
                     filename = os.path.join(values["-FOLDER-"], values["-FILE LIST-"][0])
                 if event == '-LOADED LIST-':
                     filename = values["-LOADED LIST-"][0]
+                if os.path.isdir(filename):
+                    file_list = os.listdir(filename)
+                    file_list = [f"{filename}/{f}" for f in file_list
+                                 if os.path.isfile(f"{filename}/{f}")
+                                 and f.lower().endswith(('.png', '.jpg', '.jpeg', '.tiff', '.bmp'))]
+                    filename = file_list[0]
                 try:
                     im = Image.open(filename)
                 except:
@@ -115,7 +145,7 @@ def load_loop(window, loaded_stuff):
             except:
                 pass
 
-        elif event == "-LOAD FOLDER-":
+        if event == "-LOAD FOLDER-":
             if noImagesInFolder:
                 continue
             try:
@@ -126,7 +156,33 @@ def load_loop(window, loaded_stuff):
             except:
                 pass
 
-        elif event == "-LOAD IMAGE-":
+        if event == "-LOAD FOLDER-":
+            if noImagesInFolder:
+                continue
+            try:
+                folder = values["-FOLDER-"]
+                if os.path.isdir(folder) and folder not in loaded_stuff:
+                    loaded_stuff.append(folder)
+                    window["-LOADED LIST-"].update(loaded_stuff)
+            except:
+                pass
+
+        if event == "-LOAD FILTERED-":
+            if noImagesInFolder:
+                continue
+            filteredFiles = window['-FILE LIST-'].get_list_values()
+            if filteredFiles:
+                try:
+                    folder = values["-FOLDER-"]
+                    for file in filteredFiles:
+                        filename = f"{folder}/{file}"
+                        if os.path.isfile(filename) and filename not in loaded_stuff:
+                            loaded_stuff.append(filename)
+                            window["-LOADED LIST-"].update(loaded_stuff)
+                except:
+                    pass
+
+        if event == "-LOAD IMAGE-":
             try:
                 folder = values["-FOLDER-"]
                 file = values["-FILE LIST-"][0]
@@ -137,19 +193,21 @@ def load_loop(window, loaded_stuff):
             except:
                 pass
 
-        elif event == "-DELETE-":
+        if event == "-DELETE-":
             try:
                 stuff_to_delete = values["-LOADED LIST-"][0]
                 if stuff_to_delete in loaded_stuff:
                     loaded_stuff.remove(stuff_to_delete)
                     window["-LOADED LIST-"].update(loaded_stuff)
+                    window["-IMAGE-"].update(data=[])
             except:
                 pass
 
-        elif event == "-DELETE ALL-":
+        if event == "-DELETE ALL-":
             try:
                 loaded_stuff = []
                 window["-LOADED LIST-"].update(loaded_stuff)
+                window["-IMAGE-"].update(data=[])
             except:
                 pass
 

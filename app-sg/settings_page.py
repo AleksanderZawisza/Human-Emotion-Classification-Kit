@@ -112,8 +112,7 @@ def settings_loop(window, loaded_stuff, faceCascade):
             if os.path.isdir(filepath):
                 file_list = os.listdir(filepath)
                 file_list = [f"{filepath}/{f}" for f in file_list
-                             if os.path.isfile(f"{filepath}/{f}")
-                             and f.lower().endswith(('.png', '.jpg', '.jpeg', '.tiff', '.bmp', '.gif'))]
+                             if os.path.isfile(f"{filepath}/{f}")]
                 filepath = file_list[0]
             if os.path.isfile(filepath):
                 try:
@@ -136,8 +135,7 @@ def settings_loop(window, loaded_stuff, faceCascade):
             if os.path.isdir(filepath):
                 file_list = os.listdir(filepath)
                 file_list = [f"{filepath}/{f}" for f in file_list
-                             if os.path.isfile(f"{filepath}/{f}")
-                             and f.lower().endswith(('.png', '.jpg', '.jpeg', '.tiff', '.bmp', '.gif'))]
+                             if os.path.isfile(f"{filepath}/{f}")]
                 filepath = file_list[0]
             if os.path.isfile(filepath):
                 tmpsave = f"{tmpdirpath}/detect_test.png"
