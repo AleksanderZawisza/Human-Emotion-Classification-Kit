@@ -64,7 +64,7 @@ def load_loop(window, loaded_stuff):
     while True:
         event, values = window.read()
 
-        if event == "Back":
+        if 'Back' in event:
             back_event(window)
             return loaded_stuff
 

@@ -1,5 +1,5 @@
 import PySimpleGUI as sg
-
+from utils import back_event
 
 def settings_layout():
     layout = [[sg.Column([[sg.Text('Change prediction settings', font=('Courier New', 20))],
@@ -32,11 +32,23 @@ def settings_layout():
                         font=('Courier New', 12), element_justification="center")], #Gdzies kolo tego dac ustawienia do face detection
               [sg.Frame("",
                         [[
-                  sg.Button('Back', enable_events=True, size=(10, 1), font=('Courier New', 12))]],
+                  sg.Button("Back", enable_events=True, size=(10, 1), font=('Courier New', 12))]],
                         element_justification='center', border_width=0, pad=((0, 0), (16, 0)),
                         vertical_alignment='center')],
               ]
     return layout
+
+def settings_loop(window):
+    while True:
+        event, values = window.read()
+
+        if "Back" in event:
+            back_event(window)
+            return
+
+        if event == "Exit" or event == sg.WIN_CLOSED:
+            break
+
 
 
 if __name__ == "__main__":

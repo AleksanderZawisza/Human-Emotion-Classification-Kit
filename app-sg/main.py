@@ -1,5 +1,5 @@
 import PySimpleGUI as sg
-from settings_page import settings_layout
+from settings_page import settings_layout, settings_loop
 from base_page import base_layout
 from load_page import load_layout, load_loop
 from prediction_page import prediction_layout
@@ -49,6 +49,7 @@ class HECKApp:
             if event == 'Settings':
                 window[f'-COL1-'].update(visible=False)
                 window[f'-COL3-'].update(visible=True)
+                settings_loop(window)
             if 'Back' in event:
                 back_event(window)
         window.close()
