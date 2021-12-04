@@ -3,7 +3,7 @@ import PySimpleGUI as sg
 
 def settings_layout():
     layout = [[sg.Column([[sg.Text('Change prediction settings', font=('Courier New', 20))],
-                          [sg.HSep(pad=((0, 0), (0, 4)))]])],
+              [sg.HSep(pad=((0, 0), (0, 4)))]])],
               [sg.Frame('Choose model',
                         [[sg.Text('Accuracy: 69% | Face Det. Accuracy: 75% | Face Pred. Time: 0.15s',
                                   font=('Courier 10'))],
@@ -24,13 +24,12 @@ def settings_layout():
                         font=('Courier New', 12), element_justification='center')],
               [sg.Frame('Use Face Detection?',
                         [[sg.Radio("Yes", group_id=2, default=True, key="-FACE DETECTION-"),
-                          sg.Radio("No", group_id=2, key="-NO FACE DETECTION-")]],
-                        expand_x=True, pad=((0, 0), (0, 0)), size=(560, 300),
-                        font=('Courier New', 12), element_justification="center")],
-              # Gdzies kolo tego dac ustawienia do face detection
+                         sg.Radio("No", group_id=2, key="-NO FACE DETECTION-")]],
+                        expand_x=True, pad=((0, 0), (5, 0)), size=(560, 300),
+                        font=('Courier New', 12), element_justification="center")], #Gdzies kolo tego dac ustawienia do face detection
               [sg.Frame("", [[
                   sg.Button('Back', enable_events=True, size=(10, 1), font=('Courier New', 12))]],
-                        element_justification='center', border_width=0, pad=((0, 0), (20, 0)),
+                        element_justification='center', border_width=0, pad=((0, 0), (16, 0)),
                         vertical_alignment='center')],
               ]
     return layout
