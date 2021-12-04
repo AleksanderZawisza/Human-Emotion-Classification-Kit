@@ -107,10 +107,10 @@ def load_loop(window, loaded_stuff):
                           if os.path.isfile(os.path.join(folder, f))
                           and f.lower().endswith(('.png', '.jpg', '.jpeg', '.tiff', '.bmp'))]
                 currentFolderFiles = fnames
-            if currentFolderFiles:
-                search = values['-FILTER-']
-                new_values = [x for x in currentFolderFiles if search.lower() in x.lower()]  # do the filtering
-                window['-FILE LIST-'].update(new_values)  # display in the listbox
+                if currentFolderFiles:
+                    search = values['-FILTER-']
+                    new_values = [x for x in currentFolderFiles if search.lower() in x.lower()]  # do the filtering
+                    window['-FILE LIST-'].update(new_values)  # display in the listbox
 
         if event == "-FILE LIST-" or event == '-LOADED LIST-':  # A file was chosen from the listbox
             try:
@@ -151,8 +151,8 @@ def load_loop(window, loaded_stuff):
                           if os.path.isfile(os.path.join(folder, f))
                           and f.lower().endswith(('.png', '.jpg', '.jpeg', '.tiff', '.bmp'))]
                 currentFolderFiles = fnames
-            if not currentFolderFiles:
-                continue
+                if not currentFolderFiles:
+                    continue
             try:
                 folder = values["-FOLDER-"]
                 if os.path.isdir(folder) and folder not in loaded_stuff:
