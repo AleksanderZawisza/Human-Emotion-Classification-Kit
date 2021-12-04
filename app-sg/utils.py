@@ -8,9 +8,12 @@ def back_event(window):
     window[f'-COL1-'].update(visible=True)
 
 
-def predict(window):
-    event, values = window.read()
+def predict_res9pt():
+    return
 
+
+def predict_res50tf():
+    return
 
 def simple_detect_draw_face(img_path, save_dir, faceCascade, scale, minneigh, minsize):
     img = cv2.imread(img_path)

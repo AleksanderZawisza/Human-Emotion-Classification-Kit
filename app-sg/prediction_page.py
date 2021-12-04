@@ -1,7 +1,6 @@
 import PySimpleGUI as sg
 from utils import back_event
-from PIL import Image
-from io import BytesIO
+from progress_page import progress_loop
 import os
 
 
@@ -14,7 +13,7 @@ def prediction_layout():
                                  border_width=0, pad=(0, 2))],
                        [sg.Frame('Choose files/folders for prediction:',
                                  [[sg.Listbox(values=[], enable_events=True, size=(87, 30),
-                                              key="-LOADED FILES SHOW-",
+                                              key="-CHOOSE FILES-",
                                               horizontal_scroll=True, highlight_background_color='#81b2db',
                                               select_mode="multiple")
                                    ]],
@@ -30,7 +29,7 @@ def prediction_layout():
               [sg.Frame("", [[col1]], pad=(0, 10), border_width=0)],
               [sg.Frame("", [[
                   sg.Button('Back', enable_events=True, size=(10, 1), font=('Courier New', 12)),
-                  sg.Button('Predict', enable_events=True, size=(10, 1), font=('Courier New', 12))]],
+                  sg.Button('Predict', enable_events=True, size=(10, 1), font=('Courier New', 12), key='-PREDICT-')]],
                         element_justification='center', border_width=0, pad=(0, 0),
                         vertical_alignment='center'),
                ], ]
@@ -39,13 +38,21 @@ def prediction_layout():
 
 def predict_loop(window, loaded_stuff):
     cwd = os.getcwd().replace('\\', '/')
-    predpath = f"{cwd}/predictions"
+    pred_path = f"{cwd}/predictions"
+    example_path = f"{cwd}/example_images"
 
-    window["-LOADED FILES SHOW-"].update(loaded_stuff)
-    window["-RESULT FOLDER-"].update(value=predpath)
+    # when user didnt load any images to predict on (get defaults)
+    if not loaded_stuff:
+        loaded_stuff = [f"{example_path}/angry1.png", f"{example_path}/sad1.png", f"{example_path}/happy1.png"]
+
+    chosen_stuff = []
+
+    window["-CHOOSE FILES-"].update(loaded_stuff)
+    window["-RESULT FOLDER-"].update(value=pred_path)
 
     while True:
         event, values = window.read()
+        print(event, values)
 
         if event == "Exit" or event == sg.WIN_CLOSED or event is None:
             break
@@ -54,27 +61,17 @@ def predict_loop(window, loaded_stuff):
             back_event(window)
             return
 
-        if event == "-LOADED FILES SHOW-" or event == '-CHOSEN FILE LIST-':  # A file was chosen from the listbox
-            try:
-                if event == "-LOADED FILES SHOW-":
-                    filename = values["-LOADED FILES SHOW-"][0]
-                if event == '-CHOSEN FILE LIST-':
-                    filename = values["-CHOSEN FILE LIST-"][0]
-                try:
-                    im = Image.open(filename)
-                except:
-                    pass
-                width, height = (350, 250)
-                scale = max(im.width / width, im.height / height)
-                if scale > 1:
-                    w, h = int(im.width / scale), int(im.height / scale)
-                    im = im.resize((w, h), resample=Image.CUBIC)
-                with BytesIO() as output:
-                    im.save(output, format="PNG")
-                    data = output.getvalue()
-                window["-IMAGE-"].update(data=data)
-            except:
-                pass
+        if event == '-CHOOSE FILES-':
+            chosen_stuff = values['-CHOOSE FILES-']
+
+        if event == "-PREDICT-":
+            print(chosen_stuff)
+            if not chosen_stuff:
+                sg.PopupOK("You have not chosen any images to predict on!", title='YOU SHALL NOT PASS!!!')
+                continue
+            window[f'-COL4-'].update(visible=False)
+            window[f'-COL5-'].update(visible=True)
+            progress_loop(window, chosen_stuff)
 
 
 if __name__ == "__main__":
