@@ -2,7 +2,7 @@ import PySimpleGUI as sg
 from settings_page import settings_layout
 from base_page import base_layout
 from load_page import load_layout, load_loop
-from utils import BackEvent
+from utils import back_event
 
 # from utils import ColumnFixedSize
 
@@ -51,7 +51,7 @@ class HECKApp:
                 window[f'-COL1-'].update(visible=False)
                 window[f'-COL3-'].update(visible=True)
             if 'Back' in event:
-                BackEvent(window)
+                back_event(window)
         window.close()
 
 
