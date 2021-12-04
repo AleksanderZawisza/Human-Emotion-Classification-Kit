@@ -66,6 +66,12 @@ def settings_layout():
 def settings_loop(window, loaded_stuff, faceCascade):
 
     cwd = os.getcwd().replace('\\', '/')
+    example_path = f"{cwd}/example_images"
+
+    # when user didnt load any images to predict on (get defaults)
+    if not loaded_stuff:
+        loaded_stuff = [f"{example_path}/angry1.png", f"{example_path}/sad1.png", f"{example_path}/happy1.png"]
+
     tmpdirpath = f"{cwd}/faceutils/detected_faces"
     if not os.path.isdir(tmpdirpath):
         os.mkdir(tmpdirpath)
