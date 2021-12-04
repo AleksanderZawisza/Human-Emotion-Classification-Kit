@@ -9,7 +9,7 @@ def settings_layout():
               [sg.HSep(pad=((0, 0), (0, 4)))]])],
               [sg.Frame('Choose model',
                         [[sg.Text('Accuracy: 69% | Face Det. Accuracy: 75% | Face Pred. Time: 0.15s',
-                                  font=('Courier 10'))],
+                                  font=('Courier 10'),)],
                          [sg.Radio("ResNet50 modified TensorFlow", group_id=1, default=True, key="-RESNET50-", circle_color='blue')],
 
                          # [sg.HSep(pad=(50, 10))],
@@ -17,14 +17,15 @@ def settings_layout():
                          #          font=('Courier 10'))],
                          # [sg.Radio("VGG16 modified TensorFlow", group_id=1)],
 
-                         [sg.HSep(pad=(50, 10))],
+                         #[sg.HSep(pad=(50, 10))],
                          [sg.Text('Accuracy: 63% | Face Det. Accuracy: 73% | Face Pred. Time: 0.09s',
                                   font=('Courier 10'))],
                          [sg.Radio("ResNet9 PyTorch", group_id=1, key="-RESNET9-", circle_color='blue')],
 
                          ],
-                        expand_x=True, pad=((0, 0), (8, 0)), size=(560, 160),
-                        font=('Courier New', 12), element_justification='center')],
+                        expand_x=True, pad=((0, 0), (8, 0)), size=(560, 155), border_width=0,
+                        font=('Courier New', 12), element_justification='center', vertical_alignment='middle')],
+              [sg.HSep()],
               [sg.Frame('Use Face Detection?',
                         [[sg.Radio("Yes", group_id=2, default=True, key="-FACE DETECTION-", enable_events=True,  circle_color='blue'),
                          sg.Radio("No", group_id=2, key="-NO FACE DETECTION-", enable_events=True, circle_color='blue')],
@@ -52,8 +53,8 @@ def settings_layout():
                                        expand_x=True, expand_y=True, border_width=0, pad=(0, 0),
                                        element_justification='center')],
                          ], expand_x=True, expand_y=True, border_width=0, font=('Courier New', 11))]],
-                        expand_x=True, pad=((0, 0), (5, 0)), size=(560, 300),
-                        font=('Courier New', 12), element_justification="center")], #Gdzies kolo tego dac ustawienia do face detection
+                        expand_x=True, pad=((0, 0), (5, 0)), size=(560, 300),  border_width=0,
+                        font=('Courier New', 12), element_justification="center")],
               [sg.Frame("",
                         [[
                   sg.Button("Back", enable_events=True, size=(10, 1), font=('Courier New', 12))]],
