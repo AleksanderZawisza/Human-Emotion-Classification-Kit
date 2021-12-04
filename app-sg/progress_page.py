@@ -18,6 +18,8 @@ def progress_loop(window, chosen_stuff, values, faceCascade, models):
     # print('Counted:')
     # print(num_pics)
 
+    test = []
+
     res9pt = values['-RESNET9-']
     res50tf = values['-RESNET50-']
     detection = values['-FACE DETECTION-']
@@ -31,7 +33,7 @@ def progress_loop(window, chosen_stuff, values, faceCascade, models):
     window['-PROGRESS BAR-'].update(i, steps)
 
     for image_path in pic_list:
-        event, values = window.read()
+        event, values = window.read(0)
 
         if event == "Exit" or event == sg.WIN_CLOSED or event is None:
             break
@@ -42,7 +44,8 @@ def progress_loop(window, chosen_stuff, values, faceCascade, models):
             return models
 
         if res9pt:
-            predict_res9pt(image_path, models['res9pt'], detection, faceCascade)
+            out = predict_res9pt(image_path, models['res9pt'], detection, faceCascade)
+            test.append(out)
 
         # TODO
         elif res50tf:
@@ -50,6 +53,8 @@ def progress_loop(window, chosen_stuff, values, faceCascade, models):
 
         i += 1
         window['-PROGRESS BAR-'].update(i, steps)
+
+    print(test)
 
 
 if __name__ == "__main__":

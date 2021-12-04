@@ -4,7 +4,7 @@ from base_page import base_layout
 from load_page import load_layout, load_loop
 from prediction_page import prediction_layout, predict_loop
 from progress_page import progress_loop, progress_layout
-from utils import back_event
+from utils import back_event, ResNet
 import cv2
 
 
