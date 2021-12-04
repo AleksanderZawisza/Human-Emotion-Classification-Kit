@@ -2,7 +2,7 @@ import PySimpleGUI as sg
 from settings_page import settings_layout, settings_loop
 from base_page import base_layout
 from load_page import load_layout, load_loop
-from prediction_page import prediction_layout
+from prediction_page import prediction_layout, predict_loop
 from utils import back_event
 
 
@@ -42,6 +42,7 @@ class HECKApp:
             if event == 'Predict emotions':
                 window[f'-COL1-'].update(visible=False)
                 window[f'-COL4-'].update(visible=True)
+                predict_loop(window, loaded_stuff)
             if event == 'Load images':
                 window[f'-COL1-'].update(visible=False)
                 window[f'-COL2-'].update(visible=True)
