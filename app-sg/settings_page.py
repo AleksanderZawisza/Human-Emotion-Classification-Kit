@@ -2,7 +2,8 @@ import PySimpleGUI as sg
 
 
 def settings_layout():
-    layout = [[sg.Text('Change prediction settings', font=('Courier New', 20))],
+    layout = [[sg.Text('Change prediction settings', font=('Courier New', 20), pad=((0, 0), (70, 0)))],
+              [sg.HSep(pad=((0, 0), (0, 20)))],
               [sg.Frame('Choose model',
                         [[sg.Radio("ResNet50 modified TensorFlow", group_id=1, default=True)],
                          [sg.Radio("VGG16 modified TensorFlow", group_id=1)],

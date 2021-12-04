@@ -40,14 +40,14 @@ class HECKApp:
             print(event, values)
             if event in (None, 'Exit'):
                 break
-            if event == 'Prediction demo':
+            if event == 'Predict emotions':
                 window[f'-COL1-'].update(visible=False)
                 window[f'-COL4-'].update(visible=True)
             if event == 'Load images':
                 window[f'-COL1-'].update(visible=False)
                 window[f'-COL2-'].update(visible=True)
                 loaded_stuff = load_loop(window, loaded_stuff)
-            if event == 'Prediction settings':
+            if event == 'Settings':
                 window[f'-COL1-'].update(visible=False)
                 window[f'-COL3-'].update(visible=True)
             if 'Back' in event:

@@ -14,7 +14,7 @@ def load_layout():
                          sg.In(size=(28, 1), enable_events=True, key="-FOLDER-"),
                          sg.FolderBrowse(),
                          ],
-                        [sg.Listbox(values=[], enable_events=True, size=(42, 27), key="-FILE LIST-",
+                        [sg.Listbox(values=[], enable_events=True, size=(42, 22), key="-FILE LIST-",
                                     horizontal_scroll=True, highlight_background_color='#81b2db')
                         ],
                         [sg.Button('Load Folder', enable_events=True, key="-LOAD FOLDER-"),
@@ -29,21 +29,23 @@ def load_layout():
                                       [sg.Button('Unload selected', enable_events=True, key="-DELETE-")]],
                                      border_width=0, element_justification='center'),],
                            [sg.Frame('Image preview',[[sg.Image(key="-IMAGE-")]],
-                                     size=(400, 320), border_width=0, pad=(0, 0),
+                                     size=(400, 275), border_width=0, pad=(0, 0),
                                      element_justification='center')],
                            ]
 
-    col1 = sg.Column(file_list_column, size=(370,550), element_justification='center')
+    col1 = sg.Column(file_list_column, size=(370,470), element_justification='center')
     col2 = sg.Column(image_viewer_column, pad=(20,3), vertical_alignment='top', element_justification='center')
 
     # ----- Full layout -----
-    layout = [[sg.Frame("",[[col1,
-               sg.VSeperator(),
+    layout = [[sg.Column([[sg.Text('Load images', font=('Courier New', 20))],
+              [sg.HSep(pad=((0, 0), (0, 0)))]])],
+              [sg.Frame("",[[col1,
+               #sg.VSep(),
                col2]], pad=(0,0), border_width=0)],
               [sg.Frame("", [[
                   sg.Button('Back', enable_events=True, size=(10,1), font=('Courier New', 12))]],
                         element_justification='center', border_width=0, pad=(0, 0),
-                        vertical_alignment='bottom') ],]
+                        vertical_alignment='center') ],]
 
     return layout
 
@@ -87,7 +89,7 @@ def load_loop(window, loaded_stuff):
                     im = Image.open(filename)
                 except:
                     pass
-                width, height = (340, 300)
+                width, height = (350, 250)
                 scale = max(im.width / width, im.height / height)
                 if scale > 1:
                     w, h = int(im.width / scale), int(im.height / scale)
