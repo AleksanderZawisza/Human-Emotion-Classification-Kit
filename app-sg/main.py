@@ -2,9 +2,8 @@ import PySimpleGUI as sg
 from settings_page import settings_layout
 from base_page import base_layout
 from load_page import load_layout, load_loop
+from prediction_page import prediction_layout
 from utils import back_event
-
-# from utils import ColumnFixedSize
 
 
 class HECKApp:
@@ -20,13 +19,12 @@ class HECKApp:
 
         layout3 = settings_layout()
 
-        layout4 = [[sg.Text('Prediction Page interior')],
-                   [sg.Button('Back')]]
+        layout4 = prediction_layout()
 
         # ----------- Create actual layout using Columns and a row of Buttons -----------
         layout = [[sg.Column(layout1, key='-COL1-', element_justification='center', vertical_alignment='c',
                              expand_y=True),
-                   sg.Column(layout2, visible=False, key='-COL2-', element_justification='center', pad=(0,0)),
+                   sg.Column(layout2, visible=False, key='-COL2-', element_justification='center', pad=(0, 0)),
                    sg.Column(layout3, visible=False, key='-COL3-', element_justification='center'),
                    sg.Column(layout4, visible=False, key='-COL4-', element_justification='center')]]
 
@@ -38,6 +36,7 @@ class HECKApp:
         while True:
             event, values = window.read()
             print(event, values)
+            print(loaded_stuff)
             if event in (None, 'Exit'):
                 break
             if event == 'Predict emotions':
