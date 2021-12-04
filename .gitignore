@@ -1,3 +1,6 @@
-/app-sg/faceutils/*
-/app-sg/models/*
+/app-sg/faceutils/*.xml
+/app-sg/faceutils/*.dat
+/app-sg/faceutils/detected_faces/*
+/app-sg/models/*.pth
+/app-sg/models/*.h5
 *.zip
