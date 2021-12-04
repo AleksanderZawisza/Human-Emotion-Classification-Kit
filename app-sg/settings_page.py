@@ -66,6 +66,8 @@ def settings_loop(window, loaded_stuff, faceCascade):
 
     cwd = os.getcwd().replace('\\', '/')
     tmpdirpath = f"{cwd}/faceutils/detected_faces"
+    if not os.path.isdir(tmpdirpath):
+        os.mkdir(tmpdirpath)
 
     if loaded_stuff:
         window['-FACEDET DROPDOWN-'].update(values=loaded_stuff)
