@@ -24,10 +24,14 @@ def settings_layout():
                         font=('Courier New', 12), element_justification='center')],
               [sg.Frame('Use Face Detection?',
                         [[sg.Radio("Yes", group_id=2, default=True, key="-FACE DETECTION-"),
-                         sg.Radio("No", group_id=2, key="-NO FACE DETECTION-")]],
+                         sg.Radio("No", group_id=2, key="-NO FACE DETECTION-")],
+                         [sg.Frame('Face Detection settings', [[sg.Text('Test')
+
+                         ]])]],
                         expand_x=True, pad=((0, 0), (5, 0)), size=(560, 300),
                         font=('Courier New', 12), element_justification="center")], #Gdzies kolo tego dac ustawienia do face detection
-              [sg.Frame("", [[
+              [sg.Frame("",
+                        [[
                   sg.Button('Back', enable_events=True, size=(10, 1), font=('Courier New', 12))]],
                         element_justification='center', border_width=0, pad=((0, 0), (16, 0)),
                         vertical_alignment='center')],

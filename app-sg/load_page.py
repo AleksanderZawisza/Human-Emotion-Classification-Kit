@@ -15,19 +15,24 @@ def load_layout():
                          sg.In(size=(28, 1), enable_events=True, key="-FOLDER-"),
                          sg.FolderBrowse(),
                          ],
+                        [sg.Button('Load Image', enable_events=True, key="-LOAD IMAGE-"),
+                         sg.Button('Load Folder', enable_events=True, key="-LOAD FOLDER-"),
+                          ],
                         [sg.Listbox(values=[], enable_events=True, size=(42, 22), key="-FILE LIST-",
                                     horizontal_scroll=True, highlight_background_color='#81b2db')
                          ],
-                        [sg.Button('Load Folder', enable_events=True, key="-LOAD FOLDER-"),
-                         sg.Button('Load Image', enable_events=True, key="-LOAD IMAGE-"), ]
                         ]
 
     # For now will only show the name of the file that was chosen
     image_viewer_column = [[sg.Frame('Loaded folders/files:',
-                                     [[sg.Listbox(values=[], enable_events=True, size=(50, 8), key="-LOADED LIST-",
+                                     [
+                                      [sg.Listbox(values=[], enable_events=True, size=(50, 8), key="-LOADED LIST-",
                                                   horizontal_scroll=True,
                                                   highlight_background_color='#81b2db')],
-                                      [sg.Button('Unload selected', enable_events=True, key="-DELETE-")]],
+                                     [sg.Button('Unload selected', enable_events=True, key="-DELETE-"),
+                                      sg.Button('Unload all', enable_events=True, key="-DELETE ALL-"), ],
+
+                                      ],
                                      border_width=0, element_justification='center'), ],
                            [sg.Frame('Image preview', [[sg.Image(key="-IMAGE-")]],
                                      size=(400, 275), border_width=0, pad=(0, 0),
@@ -132,9 +137,17 @@ def load_loop(window, loaded_stuff):
             except:
                 pass
 
+        elif event == "-DELETE ALL-":
+            try:
+                loaded_stuff = []
+                window["-LOADED LIST-"].update(loaded_stuff)
+            except:
+                pass
+
 
 if __name__ == "__main__":
     layout = load_layout()
     window = sg.Window("Dataset/Image Loader", layout, element_justification='center',
                        size=(800, 600))
-    load_loop(window)
+    loaded_stuff = []
+    load_loop(window, loaded_stuff)
