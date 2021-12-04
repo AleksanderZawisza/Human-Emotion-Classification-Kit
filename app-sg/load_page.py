@@ -12,7 +12,7 @@ def load_layout():
 
     # First the window layout in 2 columns
     file_list_column = [[sg.Text("Folder"),
-                         sg.In(size=(28, 1), enable_events=True, key="-FOLDER-"),
+                         sg.In(size=(28, 1), enable_events=True, key="-FOLDER-", readonly=True, disabled_readonly_background_color='white'),
                          sg.FolderBrowse(),
                          ],
                         [sg.Text("Filter"), sg.Input(size=(28, 1), enable_events=True, key="-FILTER-",
@@ -63,13 +63,11 @@ def load_loop(window, loaded_stuff):
     # window = sg.Window("Dataset/Image Loader", layout, element_justification='center',
     #                    size=(800, 600))
 
-    noImagesInFolder = False
-
     # Run the Event Loop
     while True:
         event, values = window.read()
-        print(event, values)
-        print(window['-FILE LIST-'].get_list_values())
+        # print(event, values)
+        # print(window['-FILE LIST-'].get_list_values())
 
         if event == "Exit" or event == sg.WIN_CLOSED:
             break
@@ -95,9 +93,6 @@ def load_loop(window, loaded_stuff):
             event = "-FILTER-"
             if len(fnames)==0:
                 sg.PopupOK('No images found in folder!', title='SORRY')
-                noImagesInFolder = True
-            else:
-                noImagesInFolder = False
 
         if event == "-FILTER-":
             if values['-FOLDER-']:
@@ -146,18 +141,17 @@ def load_loop(window, loaded_stuff):
                 pass
 
         if event == "-LOAD FOLDER-":
-            if noImagesInFolder:
-                continue
-            try:
+            if values['-FOLDER-']:
                 folder = values["-FOLDER-"]
-                if os.path.isdir(folder) and folder not in loaded_stuff:
-                    loaded_stuff.append(folder)
-                    window["-LOADED LIST-"].update(loaded_stuff)
-            except:
-                pass
-
-        if event == "-LOAD FOLDER-":
-            if noImagesInFolder:
+                try:
+                    file_list = os.listdir(folder)
+                except:
+                    file_list = []
+                fnames = [f for f in file_list
+                          if os.path.isfile(os.path.join(folder, f))
+                          and f.lower().endswith(('.png', '.jpg', '.jpeg', '.tiff', '.bmp'))]
+                currentFolderFiles = fnames
+            if not currentFolderFiles:
                 continue
             try:
                 folder = values["-FOLDER-"]
@@ -168,8 +162,6 @@ def load_loop(window, loaded_stuff):
                 pass
 
         if event == "-LOAD FILTERED-":
-            if noImagesInFolder:
-                continue
             filteredFiles = window['-FILE LIST-'].get_list_values()
             if filteredFiles:
                 try:
