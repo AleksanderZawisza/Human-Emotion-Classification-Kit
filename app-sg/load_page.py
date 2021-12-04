@@ -60,16 +60,18 @@ def load_loop(window, loaded_stuff):
     # window = sg.Window("Dataset/Image Loader", layout, element_justification='center',
     #                    size=(800, 600))
 
+    noImagesInFolder = False
+
     # Run the Event Loop
     while True:
         event, values = window.read()
 
+        if event == "Exit" or event == sg.WIN_CLOSED:
+            break
+
         if 'Back' in event:
             back_event(window)
             return loaded_stuff
-
-        if event == "Exit" or event == sg.WIN_CLOSED:
-            break
 
         # Folder name was filled in, make a list of files in the folder
         if event == "-FOLDER-":
@@ -84,6 +86,11 @@ def load_loop(window, loaded_stuff):
             fnames = [f for f in file_list
                       if os.path.isfile(os.path.join(folder, f))
                       and f.lower().endswith(('.png', '.jpg', '.jpeg', '.tiff', '.bmp', '.gif'))]
+            if len(fnames)==0:
+                sg.popup_error('No images in folder!')
+                noImagesInFolder = True
+            else:
+                noImagesInFolder = False
             window["-FILE LIST-"].update(fnames)
 
         elif event == "-FILE LIST-" or event == '-LOADED LIST-':  # A file was chosen from the listbox
@@ -109,6 +116,8 @@ def load_loop(window, loaded_stuff):
                 pass
 
         elif event == "-LOAD FOLDER-":
+            if noImagesInFolder:
+                continue
             try:
                 folder = values["-FOLDER-"]
                 if os.path.isdir(folder) and folder not in loaded_stuff:

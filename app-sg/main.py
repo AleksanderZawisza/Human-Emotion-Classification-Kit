@@ -50,7 +50,7 @@ class HECKApp:
             if event == 'Settings':
                 window[f'-COL1-'].update(visible=False)
                 window[f'-COL3-'].update(visible=True)
-                settings_loop(window)
+                settings_loop(window, loaded_stuff)
             if 'Back' in event:
                 back_event(window)
         window.close()

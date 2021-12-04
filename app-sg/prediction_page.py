@@ -2,6 +2,7 @@ import PySimpleGUI as sg
 from utils import back_event
 from PIL import Image
 from io import BytesIO
+import os
 
 
 def prediction_layout():
@@ -37,7 +38,11 @@ def prediction_layout():
 
 
 def predict_loop(window, loaded_stuff):
+    cwd = os.getcwd().replace('\\', '/')
+    predpath = f"{cwd}/predictions"
+
     window["-LOADED FILES SHOW-"].update(loaded_stuff)
+    window["-RESULT FOLDER-"].update(value=predpath)
 
     while True:
         event, values = window.read()

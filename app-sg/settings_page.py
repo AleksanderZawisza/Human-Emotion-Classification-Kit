@@ -1,5 +1,6 @@
 import PySimpleGUI as sg
 from utils import back_event
+import os
 
 def settings_layout():
     layout = [[sg.Column([[sg.Text('Change prediction settings', font=('Courier New', 20))],
@@ -23,11 +24,19 @@ def settings_layout():
                         expand_x=True, pad=((0, 0), (8, 0)), size=(560, 160),
                         font=('Courier New', 12), element_justification='center')],
               [sg.Frame('Use Face Detection?',
-                        [[sg.Radio("Yes", group_id=2, default=True, key="-FACE DETECTION-"),
-                         sg.Radio("No", group_id=2, key="-NO FACE DETECTION-")],
-                         [sg.Frame('Face Detection settings', [[sg.Text('Test')
-
-                         ]])]],
+                        [[sg.Radio("Yes", group_id=2, default=True, key="-FACE DETECTION-", enable_events=True),
+                         sg.Radio("No", group_id=2, key="-NO FACE DETECTION-", enable_events=True)],
+                         [sg.Frame('Face Detection settings', [
+                             [sg.Text('Choose folder/image for preview:')],
+                             [sg.DropDown(['Load images to get Face Detection preview'], key='-FACEDET DROPDOWN-',
+                                          auto_size_text=True, expand_x=True, readonly=True, text_color='black', enable_events=True)],
+                             [sg.Frame('', [[sg.Image()]],
+                                     expand_x=True, expand_y=True, border_width=1, pad=(0, 0),
+                                     element_justification='center'),
+                                 sg.Frame('', [[sg.Image(key="-FD IMAGE-")]],
+                                       expand_x=True, expand_y=True, border_width=1, pad=(0, 0),
+                                       element_justification='center')],
+                         ], expand_x=True, expand_y=True, border_width=0, font=('Courier New', 11))]],
                         expand_x=True, pad=((0, 0), (5, 0)), size=(560, 300),
                         font=('Courier New', 12), element_justification="center")], #Gdzies kolo tego dac ustawienia do face detection
               [sg.Frame("",
@@ -38,16 +47,43 @@ def settings_layout():
               ]
     return layout
 
-def settings_loop(window):
+def settings_loop(window, loaded_stuff):
+
+    if loaded_stuff:
+        window['-FACEDET DROPDOWN-'].update(values=loaded_stuff)
+        window['-FACEDET DROPDOWN-'].expand()
+
     while True:
         event, values = window.read()
+
+        if event == "Exit" or event == sg.WIN_CLOSED:
+            break
 
         if "Back" in event:
             back_event(window)
             return
 
-        if event == "Exit" or event == sg.WIN_CLOSED:
-            break
+        if event == "-NO FACE DETECTION-":
+            window['-FACEDET DROPDOWN-'].update(disabled=True)
+
+        if event == "-FACE DETECTION-":
+            window['-FACEDET DROPDOWN-'].update(disabled=False)
+
+        if event == '-FACEDET DROPDOWN-':
+            file = values['-FACEDET DROPDOWN-']
+            if os.path.isdir(file):
+                file_list = os.path.listdir(file)
+                file_list = [f for f in file_list
+                      if os.path.isfile(f)
+                      and f.lower().endswith(('.png', '.jpg', '.jpeg', '.tiff', '.bmp', '.gif'))]
+                file = file_list[0]
+            if os.path.isfile(file):
+                pass
+
+
+
+
+
 
 
 
