@@ -4,6 +4,7 @@ from base_page import base_layout
 from load_page import load_layout, load_loop
 from prediction_page import prediction_layout, predict_loop
 from utils import back_event
+import cv2
 
 
 class HECKApp:
@@ -14,11 +15,8 @@ class HECKApp:
 
         # ----------- Create all the layouts this Window will display -----------
         layout1 = base_layout()
-
         layout2 = load_layout()
-
         layout3 = settings_layout()
-
         layout4 = prediction_layout()
 
         # ----------- Create actual layout using Columns and a row of Buttons -----------
@@ -33,6 +31,8 @@ class HECKApp:
 
         layout = 1
         loaded_stuff = []
+        faceCascade = cv2.CascadeClassifier('faceutils/haarcascade_frontalface_default.xml')
+
         while True:
             event, values = window.read()
             print(event, values)
@@ -50,7 +50,7 @@ class HECKApp:
             if event == 'Settings':
                 window[f'-COL1-'].update(visible=False)
                 window[f'-COL3-'].update(visible=True)
-                settings_loop(window, loaded_stuff)
+                settings_loop(window, loaded_stuff, faceCascade)
             if 'Back' in event:
                 back_event(window)
         window.close()

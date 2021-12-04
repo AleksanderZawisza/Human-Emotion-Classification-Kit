@@ -3,3 +3,4 @@ pysimplegui==4.55.1
 numpy==1.21.4
 opencv-python==4.5.4.60
 pillow==8.4.0
+dlib==19.22.0 # conda install -c conda-forge dlib==19.22.0
