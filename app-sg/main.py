@@ -37,6 +37,7 @@ class HECKApp:
         loaded_stuff = []
         faceCascade = cv2.CascadeClassifier('faceutils/haarcascade_frontalface_default.xml')
         models = {'res9pt': [], 'res50tf': []}
+        predictor = None
 
         while True:
             event, values = window.read()
@@ -47,7 +48,7 @@ class HECKApp:
             if event == 'Predict emotions':
                 window[f'-COL1-'].update(visible=False)
                 window[f'-COL4-'].update(visible=True)
-                models = predict_loop(window, loaded_stuff, faceCascade, models)
+                models, predictor = predict_loop(window, loaded_stuff, faceCascade, models, predictor)
             if event == 'Load images':
                 window[f'-COL1-'].update(visible=False)
                 window[f'-COL2-'].update(visible=True)

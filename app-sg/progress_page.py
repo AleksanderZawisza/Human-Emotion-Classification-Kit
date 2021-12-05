@@ -1,5 +1,6 @@
 import PySimpleGUI as sg
 from utils import list_all_pictures, predict_res9pt, predict_res50tf, load_res9pt, load_res50tf
+import dlib
 
 
 def progress_layout():
@@ -11,7 +12,7 @@ def progress_layout():
     return layout
 
 
-def progress_loop(window, chosen_stuff, values, faceCascade, models):
+def progress_loop(window, chosen_stuff, values, faceCascade, models, predictor):
     pic_list = list_all_pictures(chosen_stuff)
     num_pics = len(pic_list)
     steps = num_pics + 1
@@ -28,6 +29,8 @@ def progress_loop(window, chosen_stuff, values, faceCascade, models):
         models['res9pt'] = load_res9pt()
     elif res50tf and not models['res50tf']:
         models['res50tf'] = load_res50tf()
+    if not predictor:
+        predictor = dlib.shape_predictor('faceutils/shape_predictor_68_face_landmarks.dat')
 
     i = 1
     window['-PROGRESS BAR-'].update(i, steps)
@@ -41,15 +44,16 @@ def progress_loop(window, chosen_stuff, values, faceCascade, models):
         if 'Cancel' in event:
             window[f'-COL5-'].update(visible=False)
             window[f'-COL4-'].update(visible=True)
-            return models
+            return models, predictor
 
         if res9pt:
-            out = predict_res9pt(image_path, models['res9pt'], detection, faceCascade)
+            out = predict_res9pt(image_path, models['res9pt'])
             test.append(out)
 
         # TODO
         elif res50tf:
-            predict_res50tf(image_path, models['res50tf'], detection, faceCascade)
+            out = predict_res50tf(image_path, models['res50tf'], predictor)
+            test.append(out)
 
         i += 1
         window['-PROGRESS BAR-'].update(i, steps)

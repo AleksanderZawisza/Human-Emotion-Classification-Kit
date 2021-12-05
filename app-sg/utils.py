@@ -6,6 +6,8 @@ import torch.nn.functional as F
 import torchvision.transforms as tt
 import numpy as np
 from PIL import Image
+import dlib
+from keras.models import load_model
 
 
 def back_event(window):
@@ -54,23 +56,13 @@ def load_res9pt():
 
 
 def load_res50tf():
-    return
+    model_path = "models/RESNET50-MODYFIKACJA-EPOCHS_30test_acc_0.681.h5"
+    return load_model(model_path)
 
 
-def predict_res9pt(path, model, detect_face, faceCascade):
+def predict_res9pt(path, model):
     img = Image.open(path).convert('RGB')
     img = np.asarray(img)
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    if detect_face:
-        faces = faceCascade.detectMultiScale(
-            gray,
-            scaleFactor=1.1,
-            minNeighbors=5,
-            minSize=(30, 30))
-        img = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
-        for (x, y, w, h) in faces:
-            # cv2.rectangle(image, (x, y), (x+w, y+h), (0, 255, 0), 2)
-            img = img[y:y + h, x:x + w]
 
     preprocess = tt.Compose([tt.Resize((64, 64)),
                              tt.Grayscale(num_output_channels=1),
@@ -82,9 +74,32 @@ def predict_res9pt(path, model, detect_face, faceCascade):
     _, index = torch.max(out, 1)
     return index.item()
 
+def facial_landmarks(image, predictor):
+    #image = cv2.imread(filepath)
+    face_rects = [dlib.rectangle(left=1, top=1, right=len(image)-1, bottom=len(image)-1)]
+    face_landmarks = np.matrix([[p.x, p.y] for p in predictor(image, face_rects[0]).parts()])
+    return face_landmarks
 
-def predict_res50tf(image_path, model, detection, faceCascade):
-    return
+
+def predict_res50tf(image_path, model, predictor):
+    X1 = []
+    X2 = []
+    resize = 197
+
+    img = cv2.imread(image_path)
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    img = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
+    img = cv2.resize(img, (resize, resize))
+    features = facial_landmarks(img, predictor)
+    img = img / 255
+
+    X1.append(img)
+    X2.append(features)
+    X1 = np.array(X1)
+    X2 = np.array(X2)
+    X = [X1, X2]
+    Y_pred = model.predict(X)
+    return Y_pred[0]
 
 
 # HELPER FUNCTIONS FOR MODEL LOADING AND PREDICTION
@@ -166,3 +181,14 @@ class ResNet(ImageClassificationBase):
         out = self.drop3(out)
 
         return self.classifier(out)
+
+
+if __name__ == "__main__":
+    emotions_dict = {"anger": 0, "disgust": 1, "fear": 2, "happiness": 3, "neutrality": 4, "sadness": 5, "surprise": 6}
+    model = load_res50tf()
+    predictor = dlib.shape_predictor('faceutils/shape_predictor_68_face_landmarks.dat')
+    image_path = "example_images/sad1.png"
+    pred = predict_res50tf(image_path, model, predictor)
+    print(pred)
+
+
