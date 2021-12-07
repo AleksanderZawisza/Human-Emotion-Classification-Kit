@@ -1,3 +1,5 @@
+import os.path
+
 import PySimpleGUI as sg
 from utils import list_all_pictures, predict_res9pt, predict_res50tf, load_res9pt, load_res50tf, prediction_combo
 import dlib
@@ -8,7 +10,9 @@ def progress_layout():
     layout = [[sg.Text('Please wait while prediction is in progress', font=('Courier New', 20), pad=((0, 0), (60, 0)))],
               [sg.HSep(pad=((0, 0), (0, 26)))],
               [sg.ProgressBar(max_value=BAR_MAX, orientation='h', size=(40, 40), key='-PROGRESS BAR-')],
-              [sg.Button('Cancel', size=(10, 1), font=('Courier New', 12))]]
+              [sg.Listbox([], background_color='white', key='-PROGRESS TEXT-',
+                          font=('Courier New', 12), size=(50, 15), enable_events=False, pad=(0, 20))],
+              [sg.Button('Cancel', size=(10, 1), font=('Courier New', 12), pad=(0, 20))]]
     return layout
 
 
@@ -32,6 +36,8 @@ def progress_loop(window, chosen_stuff, values, faceCascade, models, predictor):
     steps = num_pics + 2
 
     i = 1
+    progress_text = ['Loading model...']
+    window['-PROGRESS TEXT-'].update(progress_text)
     window['-PROGRESS BAR-'].update(i, steps)
 
     if res9pt and not models['res9pt']:
@@ -43,9 +49,15 @@ def progress_loop(window, chosen_stuff, values, faceCascade, models, predictor):
 
     i = 2
     window['-PROGRESS BAR-'].update(i, steps)
+    progress_text.append('Predicting emotions and saving results...')
+    window['-PROGRESS TEXT-'].update(progress_text)
 
     for image_path in pic_list:
         event, values = window.read(0)
+        rest, pic_name = os.path.split(image_path)
+        tmp_text = 'Predicting: ' + pic_name
+        progress_text.append(tmp_text)
+        window['-PROGRESS TEXT-'].update(progress_text)
 
         if event == "Exit" or event == sg.WIN_CLOSED or event is None:
             break
@@ -69,6 +81,9 @@ def progress_loop(window, chosen_stuff, values, faceCascade, models, predictor):
 
         i += 1
         window['-PROGRESS BAR-'].update(i, steps)
+
+    progress_text.append('Done!')
+    window['-PROGRESS TEXT-'].update(progress_text)
 
     return models, predictor
 
