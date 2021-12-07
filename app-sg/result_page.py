@@ -41,11 +41,12 @@ def result_loop(window, saved_stuff):
             break
 
         if 'Back' in event:
-            window[f'-COL5-'].update(visible=False)
+            window[f'-COL6-'].update(visible=False)
             window[f'-COL4-'].update(visible=True)
             return
+
         if event == "-FILE LIST FINAL-":
-            file_path = values["-FILE LIST FINAL-"]
+            file_path = values["-FILE LIST FINAL-"][0]
             print(file_path)
             im = Image.open(file_path)
             width, height = (350, 250)
@@ -56,6 +57,6 @@ def result_loop(window, saved_stuff):
             with BytesIO() as output:
                 im.save(output, format="PNG")
                 data = output.getvalue()
-            window["-IMAGE-"].update(data=data)
+            window["-IMAGE RESULT-"].update(data=data)
 
     window.close()

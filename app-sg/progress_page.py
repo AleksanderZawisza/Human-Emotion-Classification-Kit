@@ -116,6 +116,7 @@ def progress_loop(window, chosen_stuff, values, faceCascade, models, predictor):
             window[f'-COL5-'].update(visible=False)
             window[f'-COL6-'].update(visible=True)
             result_loop(window, saved_stuff)
+            break
 
     return models, predictor
 
