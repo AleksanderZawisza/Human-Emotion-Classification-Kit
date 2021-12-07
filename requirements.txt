@@ -1,9 +1,10 @@
 #python==3.7
 pysimplegui==4.55.1
-numpy==1.21.4
+numpy==1.19.5
 opencv-python==4.5.4.60
 pillow==8.4.0
 dlib==19.22.0 # conda install -c conda-forge dlib==19.22.0
+# tu sie instaluje numpy 1.21.4 wiec zrobic: pip install --force-reinstall --no-deps numpy==1.19.5
 torch==1.10.0
 torchvision==0.11.1
 #pip3 install torch==1.10.0+cu102 torchvision==0.11.1+cu102 -f https://download.pytorch.org/whl/cu102/torch_stable.html

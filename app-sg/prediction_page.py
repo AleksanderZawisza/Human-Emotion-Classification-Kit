@@ -36,7 +36,7 @@ def prediction_layout():
     return layout
 
 
-def predict_loop(window, loaded_stuff, faceCascade, models):
+def predict_loop(window, loaded_stuff, faceCascade, models, predictor):
     cwd = os.getcwd().replace('\\', '/')
     pred_path = f"{cwd}/predictions"
     example_path = f"{cwd}/example_images"
@@ -59,7 +59,7 @@ def predict_loop(window, loaded_stuff, faceCascade, models):
 
         if 'Back' in event:
             back_event(window)
-            return models
+            return models, predictor
 
         if event == '-CHOOSE FILES-':
             chosen_stuff = values['-CHOOSE FILES-']
@@ -71,7 +71,7 @@ def predict_loop(window, loaded_stuff, faceCascade, models):
                 continue
             window[f'-COL4-'].update(visible=False)
             window[f'-COL5-'].update(visible=True)
-            models = progress_loop(window, chosen_stuff, values, faceCascade, models)
+            models, predictor = progress_loop(window, chosen_stuff, values, faceCascade, models, predictor)
 
 
 if __name__ == "__main__":
