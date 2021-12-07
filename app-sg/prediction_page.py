@@ -43,7 +43,8 @@ def predict_loop(window, loaded_stuff, faceCascade, models, predictor):
 
     # when user didnt load any images to predict on (get defaults)
     if not loaded_stuff:
-        loaded_stuff = [f"{example_path}/angry1.png", f"{example_path}/sad1.png", f"{example_path}/happy1.png"]
+        loaded_stuff = [f"{example_path}/angry1.png", f"{example_path}/sad1.png",
+                        f"{example_path}/happy1.png", f"{example_path}/crowd.jpg"]
 
     chosen_stuff = []
 
