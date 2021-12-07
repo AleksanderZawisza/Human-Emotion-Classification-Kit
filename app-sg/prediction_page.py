@@ -55,7 +55,7 @@ def predict_loop(window, loaded_stuff, faceCascade, models, predictor):
         print(event, values)
 
         if event == "Exit" or event == sg.WIN_CLOSED or event is None:
-            break
+            return models, predictor
 
         if 'Back' in event:
             back_event(window)

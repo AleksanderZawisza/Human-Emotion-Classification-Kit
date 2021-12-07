@@ -77,7 +77,7 @@ def prediction_combo(img_path, save_dir, model, model_text, detection, faceCasca
     res, pic_name = os.path.split(img_path)
     save_path = os.path.join(save_dir, pic_name)
     cv2.imwrite(save_path, img)
-    return out
+    return model, predictor
 
 
 def list_all_pictures(chosen_stuff):

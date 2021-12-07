@@ -70,7 +70,7 @@ def progress_loop(window, chosen_stuff, values, faceCascade, models, predictor):
         i += 1
         window['-PROGRESS BAR-'].update(i, steps)
 
-    print(test)
+    return models, predictor
 
 
 if __name__ == "__main__":
