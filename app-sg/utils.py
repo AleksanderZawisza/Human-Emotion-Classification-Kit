@@ -1,11 +1,13 @@
 import os
+import time
+
 import cv2
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.transforms as tt
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageFont, ImageDraw
 import dlib
 from keras.models import load_model
 
@@ -35,44 +37,104 @@ def simple_detect_draw_face(img_path, save_dir, faceCascade, scale, minneigh, mi
 
     cv2.imwrite(save_dir, img)
 
+def write_emotions_on_img(img, emotion_preds, bottomLeftCornerOfText, faceid=0, topLeftCorner=(0,0)):
+
+
+    fontpath = "Lato-Semibold.ttf"
+    img_pil = Image.fromarray(img)
+    fontsize = min((bottomLeftCornerOfText[1] - topLeftCorner[1]) // 8, 32)
+    print(fontsize)
+    font = ImageFont.truetype(fontpath, fontsize)
+
+    xstep = 5
+
+    emotions_dict = {"anger": 0, "disgust": 1, "fear": 2, "happiness": 3, "neutrality": 4, "sadness": 5, "surprise": 6}
+    for i, key in enumerate(emotions_dict):
+        emotions_dict[key] = emotion_preds[i]
+    sorted_keys = sorted(emotions_dict, key=emotions_dict.get, reverse=True)
+    emotion_string = ""
+    upstep = fontsize+2
+    up=5
+    for key in sorted_keys:
+        if emotions_dict[key]>20:
+            up+=upstep
+            rounded = round(emotions_dict[key], 1)
+            newline = f"{key}: {rounded}%\n"
+            emotion_string = emotion_string + newline
+    emotion_string = emotion_string[:-1] #wywalenie ostatniego entera
+
+    # font = cv2.FONT_HERSHEY_SIMPLEX
+    # fontScale = 0.6
+    # fontColor = (0, 0, 255)
+    # thickness = 1
+    # lineType = 2
+
+
+    draw = ImageDraw.Draw(img_pil)
+    draw.text((topLeftCorner[0]+xstep, topLeftCorner[1]), f"id: {faceid}", font=font, fill=(0, 0, 255, 0))
+
+    # cv2.putText(img, f"id: {faceid}", (topLeftCorner[0] + 5, topLeftCorner[1] + upstep-5),
+    #             font,
+    #             fontScale,
+    #             fontColor,
+    #             thickness,
+    #             lineType)
+
+    y0, dy = bottomLeftCornerOfText[1]-up, upstep
+    for i, line in enumerate(emotion_string.split('\n')):
+        y = y0 + i * dy
+        draw.text((bottomLeftCornerOfText[0]+xstep, y), line, font=font,
+                  fill=(0, 0, 255, 0))
+        # cv2.putText(img, line, (bottomLeftCornerOfText[0]+5, y),
+        #               font,
+        #               fontScale,
+        #               fontColor,
+        #               thickness,
+        #               lineType)
+
+    img = np.array(img_pil)
+
+    return img
+
+
 
 def prediction_combo(img_path, save_dir, model, model_text, detection, faceCascade, scale, minneigh, minsize,
                      predictor=[]):
+    emotions_dict = {"anger": 0, "disgust": 1, "fear": 2, "happiness": 3, "neutrality": 4, "sadness": 5, "surprise": 6}
     img = cv2.imread(img_path)
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    faces = []
+    if detection:
+        faces = faceCascade.detectMultiScale(
+            gray,
+            scaleFactor=scale,
+            minNeighbors=int(minneigh),
+            minSize=(int(minsize), int(minsize)),
+        )
 
-    faces = faceCascade.detectMultiScale(
-        gray,
-        scaleFactor=scale,
-        minNeighbors=int(minneigh),
-        minSize=(int(minsize), int(minsize)),
-    )
+        # img = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
+        for i, (x, y, w, h) in enumerate(faces):
+            img_tmp = img[y:y + h, x:x + w]
 
-    # img = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
-    for (x, y, w, h) in faces:
-        img_tmp = img[y:y + h, x:x + w]
+            if model_text == '-RESNET9-':
+                out = predict_res9pt(img_tmp, model)
+            else:
+                out = predict_res50tf(img_tmp, model, predictor)
 
+            img = cv2.rectangle(img, (x, y), (x + w, y + h), (0, 0, 255), 2)
+            bottomLeftCornerOfText = (x, y + h)
+            topLeftCorner = (x, y)
+            img = write_emotions_on_img(img, out, bottomLeftCornerOfText, i, topLeftCorner)
+
+
+    if not detection or len(faces)==0:
         if model_text == '-RESNET9-':
             out = predict_res9pt(img_tmp, model)
         else:
             out = predict_res50tf(img_tmp, model, predictor)
 
-        img = cv2.rectangle(img, (x, y), (x + w, y + h), (0, 0, 255), 2)
-
-        font = cv2.FONT_HERSHEY_SIMPLEX
-        bottomLeftCornerOfText = (x, y+h)
-        fontScale = 1
-        fontColor = (255, 255, 255)
-        thickness = 1
-        lineType = 2
-
-        img = cv2.putText(img, str(out),
-                    bottomLeftCornerOfText,
-                    font,
-                    fontScale,
-                    fontColor,
-                    thickness,
-                    lineType)
+        bottomLeftCornerOfText = (0, img.shape[1])
+        img = write_emotions_on_img(img, out, bottomLeftCornerOfText)
 
     res, pic_name = os.path.split(img_path)
     save_path = os.path.join(save_dir, pic_name)
@@ -114,8 +176,8 @@ def predict_res9pt(img, model):
     img_preprocessed = preprocess(Image.fromarray(img))
     batch_img_tensor = torch.unsqueeze(img_preprocessed, 0)
     out = model(batch_img_tensor)
-    _, index = torch.max(out, 1)
-    return index.item()
+    percentage = torch.nn.functional.softmax(out, dim=1)[0] * 100 #procenty
+    return percentage.tolist() #normalna pythonowa lista
 
 
 def facial_landmarks(image, predictor):
@@ -142,8 +204,9 @@ def predict_res50tf(img, model, predictor):
     X1 = np.array(X1)
     X2 = np.array(X2)
     X = [X1, X2]
-    Y_pred = model.predict(X)
-    return Y_pred[0]
+    Y_pred = model.predict(X)[0]
+    Y_pred = Y_pred*100 #procenty
+    return Y_pred.tolist()  #normalna pythonowa lista
 
 
 # HELPER FUNCTIONS FOR MODEL LOADING AND PREDICTION
@@ -229,8 +292,16 @@ class ResNet(ImageClassificationBase):
 
 if __name__ == "__main__":
     emotions_dict = {"anger": 0, "disgust": 1, "fear": 2, "happiness": 3, "neutrality": 4, "sadness": 5, "surprise": 6}
-    model = load_res50tf()
-    predictor = dlib.shape_predictor('faceutils/shape_predictor_68_face_landmarks.dat')
     image_path = "example_images/sad1.png"
-    pred = predict_res50tf(image_path, model, predictor)
+    img = cv2.imread(image_path)
+    # start = time.time()
+    # predictor = dlib.shape_predictor('faceutils/shape_predictor_68_face_landmarks.dat')
+    # model = load_res50tf()
+    # end = start - time.time()
+    # pred = predict_res50tf(img, model, predictor)
+    model = load_res9pt()
+    pred = predict_res9pt(img, model)
+    img = write_emotions_on_img(img, pred, (0, img.shape[1]))
+    cv2.imwrite('test.png', img)
     print(pred)
+

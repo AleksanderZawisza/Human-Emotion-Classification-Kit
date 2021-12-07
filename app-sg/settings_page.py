@@ -8,22 +8,24 @@ def settings_layout():
     layout = [[sg.Column([[sg.Text('Change prediction settings', font=('Courier New', 20))],
               [sg.HSep(pad=((0, 0), (0, 4)))]])],
               [sg.Frame('Choose model',
-                        [[sg.Text('Accuracy: 69% | Face Det. Accuracy: 75% | Face Pred. Time: 0.15s',
-                                  font=('Courier 10'),)],
-                         [sg.Radio("ResNet50 modified TensorFlow", group_id=1, default=True, key="-RESNET50-", circle_color='blue')],
+                        [[sg.Text('Accuracy: 63% | Face Det. Accuracy: 73% | Face Pred. Time: 0.09s | First Load:  1s',
+                                  font=('Courier 10'))],
+                         [sg.Radio("ResNet9 PyTorch", group_id=1, default=True, key="-RESNET9-", circle_color='blue')],
 
                          # [sg.HSep(pad=(50, 10))],
+
+                        [sg.Text('Accuracy: 69% | Face Det. Accuracy: 75% | Face Pred. Time: 0.15s | First Load: 16s',
+                                  font=('Courier 10'),)],
+                         [sg.Radio("ResNet50 modified TensorFlow", group_id=1, key="-RESNET50-", circle_color='blue')],
+
+                         # [sg.HSep(pad=(50, 10))],
+
                          # [sg.Text('Accuracy: 60% | Face Det. Accuracy: 74% | Face Pred. Time: 0.20s',
                          #          font=('Courier 10'))],
                          # [sg.Radio("VGG16 modified TensorFlow", group_id=1)],
 
-                         #[sg.HSep(pad=(50, 10))],
-                         [sg.Text('Accuracy: 63% | Face Det. Accuracy: 73% | Face Pred. Time: 0.09s',
-                                  font=('Courier 10'))],
-                         [sg.Radio("ResNet9 PyTorch", group_id=1, key="-RESNET9-", circle_color='blue')],
-
                          ],
-                        expand_x=True, pad=((0, 0), (8, 0)), size=(560, 155), border_width=0,
+                        expand_x=True, pad=((0, 0), (8, 0)), size=(700, 145), border_width=0,
                         font=('Courier New', 12), element_justification='center', vertical_alignment='middle')],
               [sg.HSep()],
               [sg.Frame('Use Face Detection?',
@@ -42,10 +44,10 @@ def settings_layout():
                                                        default_value=5, relief=sg.RELIEF_FLAT, trough_color='#e3e3e3', key="-FD2-",
                                                        size=(20, 16))],
                                             [sg.Text('Min. Size', size=(15, 1)),
-                                             sg.Slider((5, 100), orientation='horizontal', resolution=5, pad=((0,10),(0,5)),
+                                             sg.Slider((5, 300), orientation='horizontal', resolution=5, pad=((0,10),(0,5)),
                                                        default_value=30, relief=sg.RELIEF_FLAT, trough_color='#e3e3e3', key="-FD3-",
                                                        size=(20, 16))],
-                                            [sg.Button('Detect Face', pad=((90,0),(0,0)), key="-FDSUB-", enable_events=True)]
+                                            [sg.Button('Detect Face', pad=((90,0),(15,0)), key="-FDSUB-", enable_events=True)]
                                             ],
                                      expand_x=True, expand_y=True, border_width=0, pad=(0, 0),
                                      ),
@@ -53,7 +55,7 @@ def settings_layout():
                                        expand_x=True, expand_y=True, border_width=0, pad=(0, 0),
                                        element_justification='center')],
                          ], expand_x=True, expand_y=True, border_width=0, font=('Courier New', 11))]],
-                        expand_x=True, pad=((0, 0), (5, 0)), size=(560, 300),  border_width=0,
+                        expand_x=True, pad=((0, 0), (5, 0)), size=(560, 315),  border_width=0,
                         font=('Courier New', 12), element_justification="center")],
               [sg.Frame("",
                         [[
@@ -83,6 +85,7 @@ def settings_loop(window, loaded_stuff, faceCascade):
 
     while True:
         event, values = window.read()
+        width, height = (390, 180)
 
         if event == "Exit" or event == sg.WIN_CLOSED:
             break
@@ -119,7 +122,7 @@ def settings_loop(window, loaded_stuff, faceCascade):
                     im = Image.open(filepath)
                 except:
                     pass
-                width, height = (200, 165)
+                width, height = width, height
                 scale = max(im.width / width, im.height / height)
                 if scale > 1:
                     w, h = int(im.width / scale), int(im.height / scale)
@@ -145,7 +148,7 @@ def settings_loop(window, loaded_stuff, faceCascade):
                     im = Image.open(tmpsave)
                 except:
                     pass
-                width, height = (200, 165)
+                width, height = width, height
                 scale = max(im.width / width, im.height / height)
                 if scale > 1:
                     w, h = int(im.width / scale), int(im.height / scale)
@@ -157,14 +160,9 @@ def settings_loop(window, loaded_stuff, faceCascade):
 
 
 
-
-
-
-
-
 if __name__ == "__main__":
     layout = settings_layout()
-    window = sg.Window("Settings Page", layout, element_justification='center',
+    window = sg.Window("Settings Page", layout,
                        size=(800, 600))
     while True:
         event, values = window.read()
