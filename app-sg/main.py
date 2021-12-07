@@ -3,7 +3,8 @@ from settings_page import settings_layout, settings_loop
 from base_page import base_layout
 from load_page import load_layout, load_loop
 from prediction_page import prediction_layout, predict_loop
-from progress_page import progress_loop, progress_layout
+from progress_page import progress_layout
+from result_page import result_layout
 from utils import back_event, ResNet
 import cv2
 
@@ -20,6 +21,7 @@ class HECKApp:
         layout3 = settings_layout()
         layout4 = prediction_layout()
         layout5 = progress_layout()
+        layout6 = result_layout()
 
         # ----------- Create actual layout using Columns and a row of Buttons -----------
         layout = [[sg.Column(layout1, key='-COL1-', element_justification='center', vertical_alignment='c',
@@ -28,12 +30,12 @@ class HECKApp:
                    sg.Column(layout3, visible=False, key='-COL3-', element_justification='center'),
                    sg.Column(layout4, visible=False, key='-COL4-', element_justification='center'),
                    sg.Column(layout5, visible=False, key='-COL5-', element_justification='center'),
+                   sg.Column(layout6, visible=False, key='-COL6-', element_justification='center'),
                    ]]
 
         window = sg.Window('Human Emotion Classification Kit', layout, element_justification='center',
                            size=(800, 600))
 
-        layout = 1
         loaded_stuff = []
         faceCascade = cv2.CascadeClassifier('faceutils/haarcascade_frontalface_default.xml')
         models = {'res9pt': [], 'res50tf': []}

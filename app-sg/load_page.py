@@ -6,13 +6,10 @@ from utils import back_event
 
 
 def load_layout():
-    # sg.theme("DefaultNoMoreNagging")
-    # sg.theme_button_color((('blue', '#b8cde0')))
-    # sg.set_options(font=('Courier New', 10))
-
     # First the window layout in 2 columns
     file_list_column = [[sg.Text("Folder"),
-                         sg.In(size=(28, 1), enable_events=True, key="-FOLDER-", readonly=True, disabled_readonly_background_color='white'),
+                         sg.In(size=(28, 1), enable_events=True, key="-FOLDER-", readonly=True,
+                               disabled_readonly_background_color='white'),
                          sg.FolderBrowse(),
                          ],
                         [sg.Text("Filter"), sg.Input(size=(28, 1), enable_events=True, key="-FILTER-",
@@ -29,13 +26,13 @@ def load_layout():
     # For now will only show the name of the file that was chosen
     image_viewer_column = [[sg.Frame('Loaded folders/files:',
                                      [
-                                      [sg.Listbox(values=[], enable_events=True, size=(50, 8), key="-LOADED LIST-",
-                                                  horizontal_scroll=True,
-                                                  highlight_background_color='#81b2db')],
-                                     [sg.Button('Unload selected', enable_events=True, key="-DELETE-"),
-                                      sg.Button('Unload all', enable_events=True, key="-DELETE ALL-"), ],
+                                         [sg.Listbox(values=[], enable_events=True, size=(50, 8), key="-LOADED LIST-",
+                                                     horizontal_scroll=True,
+                                                     highlight_background_color='#81b2db')],
+                                         [sg.Button('Unload selected', enable_events=True, key="-DELETE-"),
+                                          sg.Button('Unload all', enable_events=True, key="-DELETE ALL-"), ],
 
-                                      ],
+                                     ],
                                      border_width=0, element_justification='center'), ],
                            [sg.Frame('Image preview', [[sg.Image(key="-IMAGE-")]],
                                      size=(400, 275), border_width=0, pad=(0, 0),
@@ -60,9 +57,6 @@ def load_layout():
 
 
 def load_loop(window, loaded_stuff):
-    # window = sg.Window("Dataset/Image Loader", layout, element_justification='center',
-    #                    size=(800, 600))
-
     # Run the Event Loop
     while True:
         event, values = window.read()
@@ -91,7 +85,7 @@ def load_loop(window, loaded_stuff):
                       and f.lower().endswith(('.png', '.jpg', '.jpeg', '.tiff', '.bmp'))]
             window["-FILE LIST-"].update(fnames)
             event = "-FILTER-"
-            if len(fnames)==0:
+            if len(fnames) == 0:
                 sg.PopupOK('No images found in folder!', title='SORRY')
 
         if event == "-FILTER-":
