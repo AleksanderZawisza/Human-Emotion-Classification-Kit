@@ -1,5 +1,5 @@
 import PySimpleGUI as sg
-from utils import list_all_pictures, predict_res9pt, predict_res50tf, load_res9pt, load_res50tf
+from utils import list_all_pictures, predict_res9pt, predict_res50tf, load_res9pt, load_res50tf, prediction_combo
 import dlib
 
 
@@ -15,15 +15,24 @@ def progress_layout():
 def progress_loop(window, chosen_stuff, values, faceCascade, models, predictor):
     pic_list = list_all_pictures(chosen_stuff)
     num_pics = len(pic_list)
-    steps = num_pics + 1
     # print('Counted:')
     # print(num_pics)
-
     test = []
 
     res9pt = values['-RESNET9-']
     res50tf = values['-RESNET50-']
     detection = values['-FACE DETECTION-']
+    save_dir = values['-RESULT FOLDER-']
+
+    if res9pt:
+        model_text = '-RESNET9-'
+    else:
+        model_text = '-RESNET50-'
+
+    steps = num_pics + 2
+
+    i = 1
+    window['-PROGRESS BAR-'].update(i, steps)
 
     if res9pt and not models['res9pt']:
         models['res9pt'] = load_res9pt()
@@ -32,7 +41,7 @@ def progress_loop(window, chosen_stuff, values, faceCascade, models, predictor):
     if not predictor:
         predictor = dlib.shape_predictor('faceutils/shape_predictor_68_face_landmarks.dat')
 
-    i = 1
+    i = 2
     window['-PROGRESS BAR-'].update(i, steps)
 
     for image_path in pic_list:
@@ -47,12 +56,15 @@ def progress_loop(window, chosen_stuff, values, faceCascade, models, predictor):
             return models, predictor
 
         if res9pt:
-            out = predict_res9pt(image_path, models['res9pt'])
+            # out = predict_res9pt(image_path, models['res9pt'])
+            out = prediction_combo(image_path, save_dir, models['res9pt'], model_text, detection, faceCascade,
+                                   values['-FD1-'], values['-FD2-'], values['-FD3-'])
             test.append(out)
 
-        # TODO
         elif res50tf:
-            out = predict_res50tf(image_path, models['res50tf'], predictor)
+            # out = predict_res50tf(image_path, models['res50tf'], predictor)
+            out = prediction_combo(image_path, save_dir, models['res50tf'], model_text, detection, faceCascade,
+                                   values['-FD1-'], values['-FD2-'], values['-FD3-'], predictor)
             test.append(out)
 
         i += 1

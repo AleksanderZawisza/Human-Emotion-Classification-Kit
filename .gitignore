@@ -3,4 +3,5 @@
 /app-sg/faceutils/detected_faces/*
 /app-sg/models/*.pth
 /app-sg/models/*.h5
+/app-sg/predictions/*
 *.zip

@@ -36,6 +36,50 @@ def simple_detect_draw_face(img_path, save_dir, faceCascade, scale, minneigh, mi
     cv2.imwrite(save_dir, img)
 
 
+def prediction_combo(img_path, save_dir, model, model_text, detection, faceCascade, scale, minneigh, minsize,
+                     predictor=[]):
+    img = cv2.imread(img_path)
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+    faces = faceCascade.detectMultiScale(
+        gray,
+        scaleFactor=scale,
+        minNeighbors=int(minneigh),
+        minSize=(int(minsize), int(minsize)),
+    )
+
+    # img = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
+    for (x, y, w, h) in faces:
+        img_tmp = img[y:y + h, x:x + w]
+
+        if model_text == '-RESNET9-':
+            out = predict_res9pt(img_tmp, model)
+        else:
+            out = predict_res50tf(img_tmp, model, predictor)
+
+        img = cv2.rectangle(img, (x, y), (x + w, y + h), (0, 0, 255), 2)
+
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        bottomLeftCornerOfText = (x, y+h)
+        fontScale = 1
+        fontColor = (255, 255, 255)
+        thickness = 1
+        lineType = 2
+
+        img = cv2.putText(img, str(out),
+                    bottomLeftCornerOfText,
+                    font,
+                    fontScale,
+                    fontColor,
+                    thickness,
+                    lineType)
+
+    res, pic_name = os.path.split(img_path)
+    save_path = os.path.join(save_dir, pic_name)
+    cv2.imwrite(save_path, img)
+    return out
+
+
 def list_all_pictures(chosen_stuff):
     pic_list = []
     for entity in chosen_stuff:
@@ -60,8 +104,7 @@ def load_res50tf():
     return load_model(model_path)
 
 
-def predict_res9pt(path, model):
-    img = Image.open(path).convert('RGB')
+def predict_res9pt(img, model):
     img = np.asarray(img)
 
     preprocess = tt.Compose([tt.Resize((64, 64)),
@@ -74,19 +117,20 @@ def predict_res9pt(path, model):
     _, index = torch.max(out, 1)
     return index.item()
 
+
 def facial_landmarks(image, predictor):
-    #image = cv2.imread(filepath)
-    face_rects = [dlib.rectangle(left=1, top=1, right=len(image)-1, bottom=len(image)-1)]
+    # image = cv2.imread(filepath)
+    face_rects = [dlib.rectangle(left=1, top=1, right=len(image) - 1, bottom=len(image) - 1)]
     face_landmarks = np.matrix([[p.x, p.y] for p in predictor(image, face_rects[0]).parts()])
     return face_landmarks
 
 
-def predict_res50tf(image_path, model, predictor):
+def predict_res50tf(img, model, predictor):
     X1 = []
     X2 = []
     resize = 197
 
-    img = cv2.imread(image_path)
+    # img = cv2.imread(image_path)
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     img = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
     img = cv2.resize(img, (resize, resize))
@@ -190,5 +234,3 @@ if __name__ == "__main__":
     image_path = "example_images/sad1.png"
     pred = predict_res50tf(image_path, model, predictor)
     print(pred)
-
-

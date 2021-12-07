@@ -65,7 +65,7 @@ def predict_loop(window, loaded_stuff, faceCascade, models, predictor):
             chosen_stuff = values['-CHOOSE FILES-']
 
         if event == "-PREDICT-":
-            print(chosen_stuff)
+            # print(chosen_stuff)
             if not chosen_stuff:
                 sg.PopupOK("You have not chosen any images to predict on!", title='YOU SHALL NOT PASS!!!')
                 continue
