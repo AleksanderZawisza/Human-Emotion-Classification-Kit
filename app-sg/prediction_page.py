@@ -41,6 +41,8 @@ def predict_loop(window, loaded_stuff, faceCascade, models, predictor):
     pred_path = f"{cwd}/predictions"
     example_path = "example_images"
 
+    go_menu = False
+
     # when user didnt load any images to predict on (get defaults)
     if not loaded_stuff:
         loaded_stuff = [f"{example_path}/{file}" for file in os.listdir(example_path)]
@@ -52,6 +54,10 @@ def predict_loop(window, loaded_stuff, faceCascade, models, predictor):
     window["-RESULT FOLDER-"].update(value=pred_path)
 
     while True:
+        if go_menu:
+            back_event(window)
+            return models, predictor
+
         event, values = window.read()
         print(event, values)
 
@@ -72,7 +78,7 @@ def predict_loop(window, loaded_stuff, faceCascade, models, predictor):
                 continue
             window[f'-COL4-'].update(visible=False)
             window[f'-COL5-'].update(visible=True)
-            models, predictor = progress_loop(window, chosen_stuff, values, faceCascade, models, predictor)
+            models, predictor, go_menu = progress_loop(window, chosen_stuff, values, faceCascade, models, predictor)
 
 
 if __name__ == "__main__":

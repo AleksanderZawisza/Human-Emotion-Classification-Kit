@@ -2,6 +2,7 @@ import PySimpleGUI as sg
 from PIL import Image
 from io import BytesIO
 import os
+from utils import list_all_pictures
 
 
 def result_layout():
@@ -26,28 +27,15 @@ def result_layout():
               [sg.Frame("", [[col_l, col_r]], pad=(0, 0), border_width=0)],
               [sg.Frame("", [[
                   sg.Button('Back', enable_events=True, size=(10, 1), font=('Courier New', 12)),
-                  sg.Button('Main menu', enable_events=True, size=(10, 1), font=('Courier New', 12))]],
+                  sg.Button('Main menu', key='-MENU', enable_events=True, size=(10, 1), font=('Courier New', 12))]],
                         element_justification='center', border_width=0, pad=(0, 0),
                         vertical_alignment='center')],
               ]
-
-    # ----- Full layout -----
-    # layout = [[sg.Column([[sg.Text('Results', font=('Courier New', 20))],
-    #                       [sg.HSep(pad=((0, 0), (0, 0)))]])],
-    #
-    #           [sg.Frame("", [[col1,
-    #                           # sg.VSep(),
-    #                           col2]], pad=(0, 0), border_width=0)],
-    #           [sg.Frame("", [[
-    #               sg.Button('Back', enable_events=True, size=(10, 1), font=('Courier New', 12)),
-    #               sg.Button('Exit', enable_events=True, size=(10, 1), font=('Courier New', 12))]],
-    #                     element_justification='center', border_width=0, pad=(0, 0),
-    #                     vertical_alignment='center')], ]
-
     return layout
 
 
 def show_image_result(chosen_path, window):
+    print(chosen_path)
     im = Image.open(chosen_path)
     width, height = (400, 300)
     scale = max(im.width / width, im.height / height)
@@ -70,19 +58,23 @@ def result_loop(window, saved_stuff):
 
         if 'Back' in event:
             window[f'-COL6-'].update(visible=False)
-            window[f'-COL4-'].update(visible=True)
-            return
+            window[f'-COL5-'].update(visible=True)
+            return False
+
+        if event == '-MENU-':
+            return True
 
         if event == '-FOLDERPIC DROPDOWN-':
-            chosen_path = values['-FOLDERPIC DROPDOWN-'][0]
+            chosen_path = values['-FOLDERPIC DROPDOWN-']
             if os.path.isdir(chosen_path):
-                pics = os.listdir(chosen_path)
+                pics = list_all_pictures([chosen_path])
                 window['-PIC DROPDOWN-'].update(values=pics)
             else:
+                window['-PIC DROPDOWN-'].update(values=[])
                 show_image_result(chosen_path, window)
 
-        if event == '-PIC DROPDOWN' and values['-PIC DROPDOWN']:
-            chosen_pic = values['-FOLDERPIC DROPDOWN-'][0]
+        if event == '-PIC DROPDOWN':
+            chosen_pic = values['-PIC DROPDOWN-']
             show_image_result(chosen_pic, window)
 
     window.close()

@@ -27,6 +27,8 @@ def progress_loop(window, chosen_stuff, values, faceCascade, models, predictor):
     window['-CONTINUE-'].update(disabled=True)
     window['-CANCEL-'].update(text='Cancel')
 
+    go_menu = False
+
     pic_list = list_all_pictures(chosen_stuff)
     num_pics = len(pic_list)
     # print('Counted:')
@@ -151,6 +153,8 @@ def progress_loop(window, chosen_stuff, values, faceCascade, models, predictor):
     window['-CANCEL-'].update(text='Back')
 
     while True:
+        if go_menu:
+            return models, predictor, go_menu
         event, values = window.read()
         if event == "Exit" or event == sg.WIN_CLOSED or event is None:
             break
@@ -158,15 +162,15 @@ def progress_loop(window, chosen_stuff, values, faceCascade, models, predictor):
         if '-CANCEL-' in event:
             window[f'-COL5-'].update(visible=False)
             window[f'-COL4-'].update(visible=True)
-            return models, predictor
+            return models, predictor, go_menu
 
         if event == '-CONTINUE-':
             window[f'-COL5-'].update(visible=False)
             window[f'-COL6-'].update(visible=True)
-            result_loop(window, saved_stuff)
+            go_menu = result_loop(window, saved_stuff)
             break
 
-    return models, predictor
+    return models, predictor, go_menu
 
 
 if __name__ == "__main__":
