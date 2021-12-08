@@ -170,7 +170,7 @@ def prediction_combo(img_path, save_dir, model, model_text, detection, faceCasca
     res, pic_name = os.path.split(img_path)
     save_path = f'{save_dir}/{pic_name}'
     if not os.path.isdir(save_dir):
-        os.mkdir(save_dir)
+        os.makedirs(save_dir)
     cv2.imwrite(save_path, img)
 
     result_dict = {save_path: preds}

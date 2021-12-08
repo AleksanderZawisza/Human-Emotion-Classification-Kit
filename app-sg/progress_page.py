@@ -71,6 +71,8 @@ def progress_loop(window, chosen_stuff, values, faceCascade, models, predictor):
     # progress_text.append('Predicting emotions and saving results...')
     # window['-PROGRESS TEXT-'].update(progress_text)
     sg.cprint('* Checking prediction directory...')
+    if not os.path.isdir(save_dir):
+        os.makedirs(save_dir)
     dirs_already_in_pred = os.listdir(save_dir)
     for chosen_path in chosen_stuff:
         if os.path.isdir(chosen_path):

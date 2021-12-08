@@ -77,7 +77,7 @@ def settings_loop(window, loaded_stuff, faceCascade):
 
     tmpdirpath = f"{cwd}/faceutils/detected_faces"
     if not os.path.isdir(tmpdirpath):
-        os.mkdir(tmpdirpath)
+        os.makedirs(tmpdirpath)
 
     if loaded_stuff:
         window['-FACEDET DROPDOWN-'].update(values=loaded_stuff)
