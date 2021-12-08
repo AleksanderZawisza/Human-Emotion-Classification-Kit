@@ -20,64 +20,57 @@ def back_event(window):
 
 
 def simple_detect_draw_face(img_path, save_dir, faceCascade, scale, minneigh, minsize):
-    try:
-        img = cv2.imread(img_path)
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    img = cv2.imread(img_path)
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-        faces = faceCascade.detectMultiScale(
-            gray,
-            scaleFactor=scale,
-            minNeighbors=int(minneigh),
-            minSize=(int(minsize), int(minsize)),
-        )
+    faces = faceCascade.detectMultiScale(
+        gray,
+        scaleFactor=scale,
+        minNeighbors=int(minneigh),
+        minSize=(int(minsize), int(minsize)),
+    )
 
-        # img = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
-        for (x, y, w, h) in faces:
-            img = cv2.rectangle(img, (x, y), (x + w, y + h), (0, 0, 255), 2)
-            # img = img[y:y + h, x:x + w]
+    # img = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
+    for (x, y, w, h) in faces:
+        img = cv2.rectangle(img, (x, y), (x + w, y + h), (0, 0, 255), 2)
+        # img = img[y:y + h, x:x + w]
 
-        cv2.imwrite(save_dir, img)
-    except Exception:
-        pass
+    cv2.imwrite(save_dir, img)
 
 def write_emotions_on_img(img, emotion_preds, bottomLeftCornerOfText, faceid=0, topLeftCorner=(0,0)):
-    try:
-        fontpath = "Lato-Semibold.ttf"
-        img_pil = Image.fromarray(img)
-        fontsize = min((bottomLeftCornerOfText[1] - topLeftCorner[1]) // 8, 32)
-        print(fontsize)
-        font = ImageFont.truetype(fontpath, fontsize)
+    fontpath = "Lato-Semibold.ttf"
+    img_pil = Image.fromarray(img)
+    fontsize = min((bottomLeftCornerOfText[1] - topLeftCorner[1]) // 8, 32)
+    fontsize = max(fontsize, 6)
+    font = ImageFont.truetype(fontpath, fontsize)
 
-        xstep = 5
+    xstep = 5
 
-        emotions_dict = {"anger": 0, "disgust": 1, "fear": 2, "happiness": 3, "neutrality": 4, "sadness": 5, "surprise": 6}
-        for i, key in enumerate(emotions_dict):
-            emotions_dict[key] = emotion_preds[i]
-        sorted_keys = sorted(emotions_dict, key=emotions_dict.get, reverse=True)
-        emotion_string = ""
-        upstep = fontsize+2
-        up=5
-        for key in sorted_keys:
-            if emotions_dict[key]>20:
-                up+=upstep
-                rounded = round(emotions_dict[key], 1)
-                newline = f"{key}: {rounded}%\n"
-                emotion_string = emotion_string + newline
-        emotion_string = emotion_string[:-1] #wywalenie ostatniego entera
+    emotions_dict = {"anger": 0, "disgust": 1, "fear": 2, "happiness": 3, "neutrality": 4, "sadness": 5, "surprise": 6}
+    for i, key in enumerate(emotions_dict):
+        emotions_dict[key] = emotion_preds[i]
+    sorted_keys = sorted(emotions_dict, key=emotions_dict.get, reverse=True)
+    emotion_string = ""
+    upstep = fontsize+2
+    up=5
+    for key in sorted_keys:
+        if emotions_dict[key]>20:
+            up+=upstep
+            rounded = round(emotions_dict[key], 1)
+            newline = f"{key}: {rounded}%\n"
+            emotion_string = emotion_string + newline
+    emotion_string = emotion_string[:-1] #wywalenie ostatniego entera
 
-        draw = ImageDraw.Draw(img_pil)
-        draw.text((topLeftCorner[0]+xstep, topLeftCorner[1]), f"id: {faceid}", font=font, fill=(0, 0, 255, 0))
+    draw = ImageDraw.Draw(img_pil)
+    draw.text((topLeftCorner[0]+xstep, topLeftCorner[1]), f"id: {faceid}", font=font, fill=(0, 0, 255, 0))
 
-        y0, dy = bottomLeftCornerOfText[1]-up, upstep
-        for i, line in enumerate(emotion_string.split('\n')):
-            y = y0 + i * dy
-            draw.text((bottomLeftCornerOfText[0]+xstep, y), line, font=font,
-                      fill=(0, 0, 255, 0))
+    y0, dy = bottomLeftCornerOfText[1]-up, upstep
+    for i, line in enumerate(emotion_string.split('\n')):
+        y = y0 + i * dy
+        draw.text((bottomLeftCornerOfText[0]+xstep, y), line, font=font,
+                  fill=(0, 0, 255, 0))
 
-        img = np.array(img_pil)
-
-    except Exception:
-        pass
+    img = np.array(img_pil)
 
     return img
 
@@ -118,7 +111,7 @@ def prediction_combo(img_path, save_dir, model, model_text, detection, faceCasca
         else:
             out = predict_res50tf(img, model, predictor)
 
-        bottomLeftCornerOfText = (0, img.shape[1])
+        bottomLeftCornerOfText = (0, img.shape[0])
         img = write_emotions_on_img(img, out, bottomLeftCornerOfText)
 
     res, pic_name = os.path.split(img_path)

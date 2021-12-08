@@ -45,7 +45,7 @@ def settings_layout():
                                                        size=(20, 16))],
                                             [sg.Text('Min. Size', size=(15, 1)),
                                              sg.Slider((5, 300), orientation='horizontal', resolution=5, pad=((0,10),(0,5)),
-                                                       default_value=30, relief=sg.RELIEF_FLAT, trough_color='#e3e3e3', key="-FD3-",
+                                                       default_value=50, relief=sg.RELIEF_FLAT, trough_color='#e3e3e3', key="-FD3-",
                                                        size=(20, 16))],
                                             [sg.Button('Detect Face', pad=((90,0),(15,0)), key="-FDSUB-", enable_events=True)]
                                             ],
@@ -68,11 +68,12 @@ def settings_layout():
 def settings_loop(window, loaded_stuff, faceCascade):
 
     cwd = os.getcwd().replace('\\', '/')
-    example_path = f"{cwd}/example_images"
+    example_path = "example_images"
 
     # when user didnt load any images to predict on (get defaults)
     if not loaded_stuff:
-        loaded_stuff = [f"{example_path}/angry1.png", f"{example_path}/sad1.png", f"{example_path}/happy1.png"]
+        loaded_stuff = [f"{example_path}/{file}" for file in os.listdir(example_path)]
+        loaded_stuff.append(example_path)
 
     tmpdirpath = f"{cwd}/faceutils/detected_faces"
     if not os.path.isdir(tmpdirpath):
@@ -142,9 +143,10 @@ def settings_loop(window, loaded_stuff, faceCascade):
                 filepath = file_list[0]
             if os.path.isfile(filepath):
                 tmpsave = f"{tmpdirpath}/detect_test.png"
-                simple_detect_draw_face(img_path=filepath, save_dir=f"{tmpdirpath}/detect_test.png", faceCascade=faceCascade,
-                                        scale=values['-FD1-'], minneigh=values['-FD2-'], minsize=values['-FD3-'])
                 try:
+                    simple_detect_draw_face(img_path=filepath, save_dir=f"{tmpdirpath}/detect_test.png",
+                                            faceCascade=faceCascade,
+                                            scale=values['-FD1-'], minneigh=values['-FD2-'], minsize=values['-FD3-'])
                     im = Image.open(tmpsave)
                 except:
                     pass

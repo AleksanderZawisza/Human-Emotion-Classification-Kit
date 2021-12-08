@@ -39,12 +39,12 @@ def prediction_layout():
 def predict_loop(window, loaded_stuff, faceCascade, models, predictor):
     cwd = os.getcwd().replace('\\', '/')
     pred_path = f"{cwd}/predictions"
-    example_path = f"{cwd}/example_images"
+    example_path = "example_images"
 
     # when user didnt load any images to predict on (get defaults)
     if not loaded_stuff:
-        loaded_stuff = [f"{example_path}/angry1.png", f"{example_path}/sad1.png",
-                        f"{example_path}/happy1.png", f"{example_path}/crowd.jpg"]
+        loaded_stuff = [f"{example_path}/{file}" for file in os.listdir(example_path)]
+        loaded_stuff.append(example_path)
 
     chosen_stuff = []
 

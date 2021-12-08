@@ -11,15 +11,20 @@ def progress_layout():
     layout = [[sg.Text('Please wait while prediction is in progress', font=('Courier New', 20), pad=((0, 0), (60, 0)))],
               [sg.HSep(pad=((0, 0), (0, 26)))],
               [sg.ProgressBar(max_value=BAR_MAX, orientation='h', size=(40, 40), key='-PROGRESS BAR-')],
-              [sg.Listbox([], background_color='white', key='-PROGRESS TEXT-', highlight_background_color='white', highlight_text_color='black',
-                          font=('Courier New', 12), size=(70, 15), enable_events=False, pad=(0, 20),
-                          no_scrollbar=True, )],
-              [sg.Button('Cancel', size=(10, 1), font=('Courier New', 12), pad=(10, 20)),
-               sg.Button('Continue', size=(10, 1), font=('Courier New', 12), pad=(10, 20), disabled=True)]]
+              # [sg.Listbox([], background_color='white', key='-PROGRESS TEXT-', highlight_background_color='white', highlight_text_color='black',
+              #             font=('Courier New', 12), size=(70, 15), enable_events=False, pad=(0, 20),
+              #             no_scrollbar=True, )],
+              [sg.Multiline(key='-PROGRESS TEXT-', font=('Courier New', 10), size=(80, 18), enable_events=False, pad=(0, 20),
+                            write_only=True, reroute_cprint=True, disabled=True)],
+              [sg.Button('Cancel', size=(10, 1), font=('Courier New', 12), pad=(10, 20), key='-CANCEL-'),
+               sg.Button('Results', size=(10, 1), font=('Courier New', 12), pad=(10, 20), disabled=True, key='-CONTINUE-')]]
     return layout
 
 
 def progress_loop(window, chosen_stuff, values, faceCascade, models, predictor):
+    window['-CONTINUE-'].update(disabled=True)
+    window['-CANCEL-'].update(text='Cancel')
+
     pic_list = list_all_pictures(chosen_stuff)
     num_pics = len(pic_list)
     # print('Counted:')
@@ -37,23 +42,29 @@ def progress_loop(window, chosen_stuff, values, faceCascade, models, predictor):
         model_text = '-RESNET50-'
 
     steps = num_pics + 2
-
+    sg.cprint("* Starting prediction")
     i = 1
-    progress_text = ['Loading model...']
-    window['-PROGRESS TEXT-'].update(progress_text)
+
+    # progress_text = ['Loading model...']
+    # window['-PROGRESS TEXT-'].update(progress_text)
     window['-PROGRESS BAR-'].update(i, steps)
 
     if res9pt and not models['res9pt']:
+        sg.cprint('* Loading model...')
         models['res9pt'] = load_res9pt()
     elif res50tf and not models['res50tf']:
+        sg.cprint('Loading model...')
         models['res50tf'] = load_res50tf()
+    else:
+        sg.cprint('* Model already loaded')
     if not predictor:
         predictor = dlib.shape_predictor('faceutils/shape_predictor_68_face_landmarks.dat')
 
     i = 2
     window['-PROGRESS BAR-'].update(i, steps)
-    progress_text.append('Predicting emotions and saving results...')
-    window['-PROGRESS TEXT-'].update(progress_text)
+    # progress_text.append('Predicting emotions and saving results...')
+    # window['-PROGRESS TEXT-'].update(progress_text)
+    sg.cprint('* Predicting emotions and saving results...')
 
     for image_path in pic_list:
         event, values = window.read(0)
@@ -61,22 +72,16 @@ def progress_loop(window, chosen_stuff, values, faceCascade, models, predictor):
         if event == "Exit" or event == sg.WIN_CLOSED or event is None:
             break
 
-        if 'Cancel' in event:
+        if '-CANCEL-' in event:
+            sg.cprint("* Prediction cancelled", text_color='red')
             window[f'-COL5-'].update(visible=False)
             window[f'-COL4-'].update(visible=True)
             return models, predictor
 
         try:
-            rest, pic_name = os.path.split(image_path)
-            tmp_text = 'Predicting: ' + pic_name
-            tmp_text2 = 'Saving:     ' + pic_name
-            progress_text.append(tmp_text)
-            progress_text.append(tmp_text2)
-            n = len(progress_text)
-            print(image_path)
-            if n > 14:
-                progress_text = progress_text[n - 14:n]
-            window['-PROGRESS TEXT-'].update(progress_text)
+            # rest, pic_name = os.path.split(image_path)
+            # tmp_text2 = 'Saving:     ' + pic_name
+            # sg.cprint(tmp_text2)
 
             if res9pt:
                 # out = predict_res9pt(image_path, models['res9pt'])
@@ -89,8 +94,10 @@ def progress_loop(window, chosen_stuff, values, faceCascade, models, predictor):
                 out = prediction_combo(image_path, save_dir, models['res50tf'], model_text, detection, faceCascade,
                                        values['-FD1-'], values['-FD2-'], values['-FD3-'], predictor)
                 test.append(out)
+            tmp_text = '* Processed: ' + image_path
+            sg.cprint(tmp_text)
         except Exception:
-            pass
+            sg.cprint('* ERROR PROCESSING: \'' + image_path+'\', IMAGE SKIPPED', text_color='red')
 
         i += 1
         window['-PROGRESS BAR-'].update(i, steps)
@@ -104,22 +111,24 @@ def progress_loop(window, chosen_stuff, values, faceCascade, models, predictor):
         except Exception:
             pass
 
-    progress_text.append('Done!')
-    window['-PROGRESS TEXT-'].update(progress_text)
+    sg.cprint('* Done!')
+    # progress_text.append('Done!')
+    # window['-PROGRESS TEXT-'].update(progress_text)
 
-    window['Continue'].update(disabled=False)
+    window['-CONTINUE-'].update(disabled=False)
+    window['-CANCEL-'].update(text='Back')
 
     while True:
         event, values = window.read()
         if event == "Exit" or event == sg.WIN_CLOSED or event is None:
             break
 
-        if 'Cancel' in event:
+        if '-CANCEL-' in event:
             window[f'-COL5-'].update(visible=False)
             window[f'-COL4-'].update(visible=True)
             return models, predictor
 
-        if event == 'Continue':
+        if event == '-CONTINUE-':
             window[f'-COL5-'].update(visible=False)
             window[f'-COL6-'].update(visible=True)
             result_loop(window, saved_stuff)
