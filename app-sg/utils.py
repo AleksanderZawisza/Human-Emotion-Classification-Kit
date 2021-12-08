@@ -9,6 +9,7 @@ import numpy as np
 from PIL import Image, ImageFont, ImageDraw
 import dlib
 from keras.models import load_model
+from statistics import mean
 
 
 def back_event(window):
@@ -18,17 +19,22 @@ def back_event(window):
     window[f'-COL1-'].update(visible=True)
 
 
-def create_result_text(results):
+def create_result_text(result_list):
+    print(result_list)
+    results = [0, 0, 0, 0, 0, 0, 0]
     emotions_dict = {"anger": 0, "disgust": 1, "fear": 2, "happiness": 3, "neutrality": 4, "sadness": 5, "surprise": 6}
+    for k in range(7):
+        for j in range(len(result_list)):
+            results[k] += result_list[j][k]
+        results[k] = results[k] / len(result_list)
     for i, key in enumerate(emotions_dict):
         emotions_dict[key] = results[i]
-    sorted_keys = sorted(emotions_dict, key=emotions_dict.get, reverse=True)
-    emotion_string = ""
+        sorted_keys = sorted(emotions_dict, key=emotions_dict.get, reverse=True)
+        emotion_string = ""
     for key in sorted_keys:
-        if emotions_dict[key] > 20:
-            rounded = round(emotions_dict[key], 1)
-            newline = f"{key}: {rounded}%\n"
-            emotion_string = emotion_string + newline
+        rounded = round(emotions_dict[key], 1)
+        newline = f"{key}: {rounded}%\n"
+        emotion_string = emotion_string + newline
     emotion_string = emotion_string[:-1]  # wywalenie ostatniego entera
     return emotion_string
 

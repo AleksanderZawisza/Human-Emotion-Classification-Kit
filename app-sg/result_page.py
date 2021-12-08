@@ -7,13 +7,12 @@ from utils import list_all_pictures, create_result_text
 
 def result_layout():
     col_l = sg.Column([[sg.Frame('Prediction results', [[sg.Text(key="-PREDICTION RESULTS-",
-                                                                 # background_color='white',
+                                                                 background_color='white',
                                                                  auto_size_text=True,
                                                                  expand_y=True,
                                                                  expand_x=True)]],
-                                 border_width=0, pad=(0, 0),
-                                 element_justification='center')]], scrollable=True,
-                      vertical_scroll_only=True, expand_y=True, expand_x=True)
+                                 border_width=0, pad=(0, 0), size=(250, 400),
+                                 element_justification='center')]])
 
     col_r = sg.Column([[sg.Frame('Image preview', [[sg.Image(key="-IMAGE RESULT-")]],
                                  size=(550, 400), border_width=0, pad=(0, 0),
@@ -78,17 +77,14 @@ def result_loop(window, saved_stuff, result_dict, change_dict):
                 window['-PIC DROPDOWN-'].update(values=[])
                 show_image_result(chosen_path, window)
                 print(result_dict)
-                result_text = []
-                for i in range(len(result_dict[chosen_path])):
-                    result_text.append(f'\nFace ID {i}:')
-                    result_text.append(create_result_text(result_dict[chosen_path][i]))
-                result_text = '\n'.join(result_text)
+                result_text = create_result_text(result_dict[chosen_path])
                 window['-PREDICTION RESULTS-'].update(result_text)
 
         if event == '-PIC DROPDOWN-':
             chosen_pic = values['-PIC DROPDOWN-']
             show_image_result(chosen_pic, window)
             print(result_dict)
-            window['-PREDICTION RESULTS-'].update(result_dict[chosen_pic])
+            result_text = create_result_text(result_dict[chosen_pic])
+            window['-PREDICTION RESULTS-'].update(result_text)
 
     window.close()
