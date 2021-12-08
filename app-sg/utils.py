@@ -18,6 +18,21 @@ def back_event(window):
     window[f'-COL1-'].update(visible=True)
 
 
+def create_result_text(results):
+    emotions_dict = {"anger": 0, "disgust": 1, "fear": 2, "happiness": 3, "neutrality": 4, "sadness": 5, "surprise": 6}
+    for i, key in enumerate(emotions_dict):
+        emotions_dict[key] = results[i]
+    sorted_keys = sorted(emotions_dict, key=emotions_dict.get, reverse=True)
+    emotion_string = ""
+    for key in sorted_keys:
+        if emotions_dict[key] > 20:
+            rounded = round(emotions_dict[key], 1)
+            newline = f"{key}: {rounded}%\n"
+            emotion_string = emotion_string + newline
+    emotion_string = emotion_string[:-1]  # wywalenie ostatniego entera
+    return emotion_string
+
+
 def simple_detect_draw_face(img_path, save_dir, faceCascade, scale, minneigh, minsize):
     img = cv2.imread(img_path)
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -47,7 +62,7 @@ def write_emotions_on_img(img, emotion_preds, bottomLeftCornerOfText, width, fac
     fontsize = max(fontsize, 7)
     font = ImageFont.truetype(fontpath, fontsize)
 
-    if fontsize==7:
+    if fontsize == 7:
         xstep = 1
         up = 1
     else:
@@ -123,13 +138,14 @@ def prediction_combo(img_path, save_dir, model, model_text, detection, faceCasca
         preds.append(out)
 
     res, pic_name = os.path.split(img_path)
-    save_path = os.path.join(save_dir, pic_name)
+    save_path = f'{save_dir}/{pic_name}'
     if not os.path.isdir(save_dir):
         os.mkdir(save_dir)
     cv2.imwrite(save_path, img)
 
-    img_pred_dict = {img_path:preds}
-    return img_pred_dict
+    result_dict = {save_path: preds}
+    change_dict = {save_path: img_path}
+    return result_dict, change_dict
 
 
 def list_all_pictures(chosen_stuff):

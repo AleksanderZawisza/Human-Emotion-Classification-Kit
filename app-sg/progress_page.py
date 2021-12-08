@@ -33,7 +33,8 @@ def progress_loop(window, chosen_stuff, values, faceCascade, models, predictor):
     num_pics = len(pic_list)
     # print('Counted:')
     # print(num_pics)
-    test = []
+    result_dict = dict()
+    change_dict = dict()
 
     res9pt = values['-RESNET9-']
     res50tf = values['-RESNET50-']
@@ -96,17 +97,19 @@ def progress_loop(window, chosen_stuff, values, faceCascade, models, predictor):
                 try:
                     if res9pt:
                         # out = predict_res9pt(image_path, models['res9pt'])
-                        out = prediction_combo(image_path, temp_save_dir, models['res9pt'], model_text, detection,
+                        result_tmp, change_tmp = prediction_combo(image_path, temp_save_dir, models['res9pt'], model_text, detection,
                                                faceCascade,
                                                values['-FD1-'], values['-FD2-'], values['-FD3-'])
-                        test.append(out)
+                        result_dict.update(result_tmp)
+                        change_dict.update(change_tmp)
 
                     elif res50tf:
                         # out = predict_res50tf(image_path, models['res50tf'], predictor)
-                        out = prediction_combo(image_path, temp_save_dir, models['res50tf'], model_text, detection,
+                        result_tmp, change_tmp = prediction_combo(image_path, temp_save_dir, models['res50tf'], model_text, detection,
                                                faceCascade,
                                                values['-FD1-'], values['-FD2-'], values['-FD3-'], predictor)
-                        test.append(out)
+                        result_dict.update(result_tmp)
+                        change_dict.update(change_tmp)
                     tmp_text = '* Processed: ' + image_path
                     sg.cprint(tmp_text)
                     i += 1
@@ -120,17 +123,19 @@ def progress_loop(window, chosen_stuff, values, faceCascade, models, predictor):
             try:
                 if res9pt:
                     # out = predict_res9pt(image_path, models['res9pt'])
-                    out = prediction_combo(chosen_path, save_dir, models['res9pt'], model_text, detection,
+                    result_tmp, change_tmp = prediction_combo(chosen_path, save_dir, models['res9pt'], model_text, detection,
                                            faceCascade,
                                            values['-FD1-'], values['-FD2-'], values['-FD3-'])
-                    test.append(out)
+                    result_dict.update(result_tmp)
+                    change_dict.update(change_tmp)
 
                 elif res50tf:
                     # out = predict_res50tf(image_path, models['res50tf'], predictor)
-                    out = prediction_combo(chosen_path, save_dir, models['res50tf'], model_text, detection,
+                    result_tmp, change_tmp = prediction_combo(chosen_path, save_dir, models['res50tf'], model_text, detection,
                                            faceCascade,
                                            values['-FD1-'], values['-FD2-'], values['-FD3-'], predictor)
-                    test.append(out)
+                    result_dict.update(result_tmp)
+                    change_dict.update(change_tmp)
 
                 _, image_name = os.path.split(chosen_path)
                 saved_path = f'{save_dir}/{image_name}'
@@ -167,8 +172,7 @@ def progress_loop(window, chosen_stuff, values, faceCascade, models, predictor):
         if event == '-CONTINUE-':
             window[f'-COL5-'].update(visible=False)
             window[f'-COL6-'].update(visible=True)
-            go_menu = result_loop(window, saved_stuff)
-            break
+            go_menu = result_loop(window, saved_stuff, result_dict, change_dict)
 
     return models, predictor, go_menu
 
