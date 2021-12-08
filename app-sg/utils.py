@@ -19,7 +19,7 @@ def back_event(window):
 
 
 def create_result_text_folder(result_list, chosen_path):
-    print(result_list)
+    # print(result_list)
     image_names = os.listdir(chosen_path)
     results = [0, 0, 0, 0, 0, 0, 0]
     emotions_dict = {"anger": 0, "disgust": 1, "fear": 2, "happiness": 3, "neutrality": 4, "sadness": 5, "surprise": 6}
@@ -44,7 +44,7 @@ def create_result_text_folder(result_list, chosen_path):
 
 
 def create_result_text(result_list):
-    print(result_list)
+    # print(result_list)
     results = [0, 0, 0, 0, 0, 0, 0]
     emotions_dict = {"anger": 0, "disgust": 1, "fear": 2, "happiness": 3, "neutrality": 4, "sadness": 5, "surprise": 6}
     for k in range(7):
@@ -339,4 +339,4 @@ if __name__ == "__main__":
     pred = predict_res9pt(img, model)
     img = write_emotions_on_img(img, pred, (0, img.shape[0]), img.shape[1])
     cv2.imwrite('test.png', img)
-    print(pred)
+# print(pred)

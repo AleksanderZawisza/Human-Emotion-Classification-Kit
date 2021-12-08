@@ -43,8 +43,8 @@ class HECKApp:
 
         while True:
             event, values = window.read()
-            print(event, values)
-            print(loaded_stuff)
+            # print(event, values)
+            # print(loaded_stuff)
             if event in (None, 'Exit'):
                 break
             if event == 'Predict emotions':
