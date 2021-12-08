@@ -74,12 +74,15 @@ def result_loop(window, saved_stuff, result_dict, change_dict):
                 pics = list_all_pictures([chosen_path])
                 window['-PIC DROPDOWN-'].update(values=pics)
                 result_text = create_result_text_folder(result_dict, chosen_path)
+                result_text = 'Average in folder: \n' + result_text
                 window['-PREDICTION RESULTS-'].update(result_text)
+                window["-IMAGE RESULT-"].update(data=[])
             else:
                 window['-PIC DROPDOWN-'].update(values=[])
                 show_image_result(chosen_path, window)
                 print(result_dict)
                 result_text = create_result_text(result_dict[chosen_path])
+                result_text = 'Average in photo: \n' + result_text
                 window['-PREDICTION RESULTS-'].update(result_text)
 
         if event == '-PIC DROPDOWN-':
@@ -87,6 +90,7 @@ def result_loop(window, saved_stuff, result_dict, change_dict):
             show_image_result(chosen_pic, window)
             print(result_dict)
             result_text = create_result_text(result_dict[chosen_pic])
+            result_text = 'Average in photo: \n' + result_text
             window['-PREDICTION RESULTS-'].update(result_text)
 
     window.close()
