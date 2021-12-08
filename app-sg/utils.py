@@ -19,6 +19,31 @@ def back_event(window):
     window[f'-COL1-'].update(visible=True)
 
 
+def create_result_text_folder(result_list, chosen_path):
+    print(result_list)
+    image_names = os.listdir(chosen_path)
+    results = [0, 0, 0, 0, 0, 0, 0]
+    emotions_dict = {"anger": 0, "disgust": 1, "fear": 2, "happiness": 3, "neutrality": 4, "sadness": 5, "surprise": 6}
+    for k in range(7):
+        n = 0
+        for f in image_names:
+            file_path = f'{chosen_path}/{f}'
+            for j in range(len(result_list[file_path])):
+                results[k] += result_list[file_path][j][k]
+                n+=1
+        results[k] = results[k] / n
+    for i, key in enumerate(emotions_dict):
+        emotions_dict[key] = results[i]
+        sorted_keys = sorted(emotions_dict, key=emotions_dict.get, reverse=True)
+        emotion_string = ""
+    for key in sorted_keys:
+        rounded = round(emotions_dict[key], 1)
+        newline = f"{key}: {rounded}%\n"
+        emotion_string = emotion_string + newline
+    emotion_string = emotion_string[:-1]  # wywalenie ostatniego entera
+    return emotion_string
+
+
 def create_result_text(result_list):
     print(result_list)
     results = [0, 0, 0, 0, 0, 0, 0]

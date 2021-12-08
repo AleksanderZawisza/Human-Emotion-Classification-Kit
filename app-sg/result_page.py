@@ -2,7 +2,7 @@ import PySimpleGUI as sg
 from PIL import Image
 from io import BytesIO
 import os
-from utils import list_all_pictures, create_result_text
+from utils import list_all_pictures, create_result_text, create_result_text_folder
 
 
 def result_layout():
@@ -73,6 +73,8 @@ def result_loop(window, saved_stuff, result_dict, change_dict):
             if os.path.isdir(chosen_path):
                 pics = list_all_pictures([chosen_path])
                 window['-PIC DROPDOWN-'].update(values=pics)
+                result_text = create_result_text_folder(result_dict, chosen_path)
+                window['-PREDICTION RESULTS-'].update(result_text)
             else:
                 window['-PIC DROPDOWN-'].update(values=[])
                 show_image_result(chosen_path, window)
