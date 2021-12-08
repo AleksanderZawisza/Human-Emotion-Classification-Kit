@@ -41,7 +41,7 @@ def result_layout():
 def show_image_result(chosen_path, window):
     # print(chosen_path)
     im = Image.open(chosen_path)
-    width, height = (580, 380)
+    width, height = (550, 380)
     scale = max(im.width / width, im.height / height)
     w, h = int(im.width / scale), int(im.height / scale)
     im = im.resize((w, h), resample=Image.CUBIC)

@@ -8,7 +8,7 @@ from utils import back_event
 def load_layout():
     # First the window layout in 2 columns
     file_list_column = [[sg.Text("Folder"),
-                         sg.In(size=(28, 1), enable_events=True, key="-FOLDER-", readonly=True,
+                         sg.In(size=(28, 1), enable_events=True, key="-FOLDER-", readonly=True, focus=False,
                                disabled_readonly_background_color='white'),
                          sg.FolderBrowse(),
                          ],

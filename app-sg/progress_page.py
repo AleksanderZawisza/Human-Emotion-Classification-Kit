@@ -4,6 +4,7 @@ import PySimpleGUI as sg
 from utils import list_all_pictures, load_res9pt, load_res50tf, prediction_combo
 from result_page import result_loop
 import dlib
+import shutil
 
 
 def progress_layout():
@@ -69,6 +70,15 @@ def progress_loop(window, chosen_stuff, values, faceCascade, models, predictor):
     window['-PROGRESS BAR-'].update(i, steps)
     # progress_text.append('Predicting emotions and saving results...')
     # window['-PROGRESS TEXT-'].update(progress_text)
+    sg.cprint('* Checking prediction directory...')
+    dirs_already_in_pred = os.listdir(save_dir)
+    for chosen_path in chosen_stuff:
+        if os.path.isdir(chosen_path):
+            _, folder_name = os.path.split(chosen_path)
+            if folder_name in dirs_already_in_pred:
+                sg.cprint(f'* Removing old folder \'{folder_name}\' from prediction directory...')
+                shutil.rmtree(f'{save_dir}/{folder_name}')
+
     sg.cprint('* Predicting emotions and saving results...')
 
     saved_stuff = []
@@ -153,7 +163,7 @@ def progress_loop(window, chosen_stuff, values, faceCascade, models, predictor):
     sg.cprint('* Done!')
     # progress_text.append('Done!')
     # window['-PROGRESS TEXT-'].update(progress_text)
-
+    saved_stuff = list(dict.fromkeys(saved_stuff)) #usuniecie duplikatow
     window['-CONTINUE-'].update(disabled=False)
     window['-CANCEL-'].update(text='Back')
 
