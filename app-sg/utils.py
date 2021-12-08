@@ -9,7 +9,6 @@ import numpy as np
 from PIL import Image, ImageFont, ImageDraw
 import dlib
 from keras.models import load_model
-from statistics import mean
 
 
 def back_event(window):
@@ -30,7 +29,7 @@ def create_result_text_folder(result_list, chosen_path):
             file_path = f'{chosen_path}/{f}'
             for j in range(len(result_list[file_path])):
                 results[k] += result_list[file_path][j][k]
-                n+=1
+                n += 1
         results[k] = results[k] / n
     for i, key in enumerate(emotions_dict):
         emotions_dict[key] = results[i]
