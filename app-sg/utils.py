@@ -37,14 +37,22 @@ def simple_detect_draw_face(img_path, save_dir, faceCascade, scale, minneigh, mi
     cv2.imwrite(save_dir, img)
 
 
-def write_emotions_on_img(img, emotion_preds, bottomLeftCornerOfText, faceid=0, topLeftCorner=(0, 0)):
+def write_emotions_on_img(img, emotion_preds, bottomLeftCornerOfText, width, faceid=0, topLeftCorner=(0, 0)):
     fontpath = "Lato-Semibold.ttf"
     img_pil = Image.fromarray(img)
-    fontsize = min((bottomLeftCornerOfText[1] - topLeftCorner[1]) // 8, 32)
-    fontsize = max(fontsize, 6)
+    height = bottomLeftCornerOfText[1] - topLeftCorner[1]
+    biggness = min(width, height)
+    fontsize = biggness // 8
+    # fontsize = min(fontsize, 40)
+    fontsize = max(fontsize, 7)
     font = ImageFont.truetype(fontpath, fontsize)
 
-    xstep = 5
+    if fontsize==7:
+        xstep = 1
+        up = 1
+    else:
+        xstep = 5
+        up = 5
 
     emotions_dict = {"anger": 0, "disgust": 1, "fear": 2, "happiness": 3, "neutrality": 4, "sadness": 5, "surprise": 6}
     for i, key in enumerate(emotions_dict):
@@ -52,7 +60,6 @@ def write_emotions_on_img(img, emotion_preds, bottomLeftCornerOfText, faceid=0, 
     sorted_keys = sorted(emotions_dict, key=emotions_dict.get, reverse=True)
     emotion_string = ""
     upstep = fontsize + 2
-    up = 5
     for key in sorted_keys:
         if emotions_dict[key] > 20:
             up += upstep
@@ -81,6 +88,7 @@ def prediction_combo(img_path, save_dir, model, model_text, detection, faceCasca
     img = cv2.imread(img_path)
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     faces = []
+    preds = []
     if detection:
         faces = faceCascade.detectMultiScale(
             gray,
@@ -101,7 +109,8 @@ def prediction_combo(img_path, save_dir, model, model_text, detection, faceCasca
             img = cv2.rectangle(img, (x, y), (x + w, y + h), (0, 0, 255), 2)
             bottomLeftCornerOfText = (x, y + h)
             topLeftCorner = (x, y)
-            img = write_emotions_on_img(img, out, bottomLeftCornerOfText, i, topLeftCorner)
+            img = write_emotions_on_img(img, out, bottomLeftCornerOfText, w, i, topLeftCorner)
+            preds.append(out)
 
     if not detection or len(faces) == 0:
         if model_text == '-RESNET9-':
@@ -110,14 +119,17 @@ def prediction_combo(img_path, save_dir, model, model_text, detection, faceCasca
             out = predict_res50tf(img, model, predictor)
 
         bottomLeftCornerOfText = (0, img.shape[0])
-        img = write_emotions_on_img(img, out, bottomLeftCornerOfText)
+        img = write_emotions_on_img(img, out, bottomLeftCornerOfText, img.shape[1])
+        preds.append(out)
 
     res, pic_name = os.path.split(img_path)
     save_path = os.path.join(save_dir, pic_name)
     if not os.path.isdir(save_dir):
         os.mkdir(save_dir)
     cv2.imwrite(save_path, img)
-    return model, predictor
+
+    img_pred_dict = {img_path:preds}
+    return img_pred_dict
 
 
 def list_all_pictures(chosen_stuff):
@@ -279,6 +291,6 @@ if __name__ == "__main__":
     # pred = predict_res50tf(img, model, predictor)
     model = load_res9pt()
     pred = predict_res9pt(img, model)
-    img = write_emotions_on_img(img, pred, (0, img.shape[1]))
+    img = write_emotions_on_img(img, pred, (0, img.shape[0]), img.shape[1])
     cv2.imwrite('test.png', img)
     print(pred)

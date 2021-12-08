@@ -44,8 +44,8 @@ def settings_layout():
                                                        default_value=5, relief=sg.RELIEF_FLAT, trough_color='#e3e3e3', key="-FD2-",
                                                        size=(20, 16))],
                                             [sg.Text('Min. Size', size=(15, 1)),
-                                             sg.Slider((5, 300), orientation='horizontal', resolution=5, pad=((0,10),(0,5)),
-                                                       default_value=50, relief=sg.RELIEF_FLAT, trough_color='#e3e3e3', key="-FD3-",
+                                             sg.Slider((30, 300), orientation='horizontal', resolution=5, pad=((0,10),(0,5)),
+                                                       default_value=70, relief=sg.RELIEF_FLAT, trough_color='#e3e3e3', key="-FD3-",
                                                        size=(20, 16))],
                                             [sg.Button('Detect Face', pad=((90,0),(15,0)), key="-FDSUB-", enable_events=True)]
                                             ],
