@@ -54,6 +54,7 @@ def show_image_result(chosen_path, window):
 def result_loop(window, saved_stuff, result_dict, change_dict):
     window['-FOLDERPIC DROPDOWN-'].update(values=saved_stuff)
     window['-FOLDERPIC DROPDOWN-'].expand()
+    window["-IMAGE RESULT-"].update(data=[])
     while True:
         event, values = window.read()
         if event == "Exit" or event == sg.WIN_CLOSED or event is None:
