@@ -37,7 +37,8 @@ def simple_detect_draw_face(img_path, save_dir, faceCascade, scale, minneigh, mi
 
     cv2.imwrite(save_dir, img)
 
-def write_emotions_on_img(img, emotion_preds, bottomLeftCornerOfText, faceid=0, topLeftCorner=(0,0)):
+
+def write_emotions_on_img(img, emotion_preds, bottomLeftCornerOfText, faceid=0, topLeftCorner=(0, 0)):
     fontpath = "Lato-Semibold.ttf"
     img_pil = Image.fromarray(img)
     fontsize = min((bottomLeftCornerOfText[1] - topLeftCorner[1]) // 8, 32)
@@ -51,29 +52,28 @@ def write_emotions_on_img(img, emotion_preds, bottomLeftCornerOfText, faceid=0, 
         emotions_dict[key] = emotion_preds[i]
     sorted_keys = sorted(emotions_dict, key=emotions_dict.get, reverse=True)
     emotion_string = ""
-    upstep = fontsize+2
-    up=5
+    upstep = fontsize + 2
+    up = 5
     for key in sorted_keys:
-        if emotions_dict[key]>20:
-            up+=upstep
+        if emotions_dict[key] > 20:
+            up += upstep
             rounded = round(emotions_dict[key], 1)
             newline = f"{key}: {rounded}%\n"
             emotion_string = emotion_string + newline
-    emotion_string = emotion_string[:-1] #wywalenie ostatniego entera
+    emotion_string = emotion_string[:-1]  # wywalenie ostatniego entera
 
     draw = ImageDraw.Draw(img_pil)
-    draw.text((topLeftCorner[0]+xstep, topLeftCorner[1]), f"id: {faceid}", font=font, fill=(0, 0, 255, 0))
+    draw.text((topLeftCorner[0] + xstep, topLeftCorner[1]), f"id: {faceid}", font=font, fill=(0, 0, 255, 0))
 
-    y0, dy = bottomLeftCornerOfText[1]-up, upstep
+    y0, dy = bottomLeftCornerOfText[1] - up, upstep
     for i, line in enumerate(emotion_string.split('\n')):
         y = y0 + i * dy
-        draw.text((bottomLeftCornerOfText[0]+xstep, y), line, font=font,
+        draw.text((bottomLeftCornerOfText[0] + xstep, y), line, font=font,
                   fill=(0, 0, 255, 0))
 
     img = np.array(img_pil)
 
     return img
-
 
 
 def prediction_combo(img_path, save_dir, model, model_text, detection, faceCascade, scale, minneigh, minsize,
@@ -104,8 +104,7 @@ def prediction_combo(img_path, save_dir, model, model_text, detection, faceCasca
             topLeftCorner = (x, y)
             img = write_emotions_on_img(img, out, bottomLeftCornerOfText, i, topLeftCorner)
 
-
-    if not detection or len(faces)==0:
+    if not detection or len(faces) == 0:
         if model_text == '-RESNET9-':
             out = predict_res9pt(img, model)
         else:
@@ -154,8 +153,8 @@ def predict_res9pt(img, model):
     img_preprocessed = preprocess(Image.fromarray(img))
     batch_img_tensor = torch.unsqueeze(img_preprocessed, 0)
     out = model(batch_img_tensor)
-    percentage = torch.nn.functional.softmax(out, dim=1)[0] * 100 #procenty
-    return percentage.tolist() #normalna pythonowa lista
+    percentage = torch.nn.functional.softmax(out, dim=1)[0] * 100  # procenty
+    return percentage.tolist()  # normalna pythonowa lista
 
 
 def facial_landmarks(image, predictor):
@@ -183,8 +182,8 @@ def predict_res50tf(img, model, predictor):
     X2 = np.array(X2)
     X = [X1, X2]
     Y_pred = model.predict(X)[0]
-    Y_pred = Y_pred*100 #procenty
-    return Y_pred.tolist()  #normalna pythonowa lista
+    Y_pred = Y_pred * 100  # procenty
+    return Y_pred.tolist()  # normalna pythonowa lista
 
 
 # HELPER FUNCTIONS FOR MODEL LOADING AND PREDICTION
@@ -282,4 +281,3 @@ if __name__ == "__main__":
     img = write_emotions_on_img(img, pred, (0, img.shape[1]))
     cv2.imwrite('test.png', img)
     print(pred)
-
