@@ -5,7 +5,7 @@ from io import BytesIO
 import os
 
 
-def train_layout():
+def train_settings_layout():
     layout = [[sg.Column([[sg.Text('Change training settings', font=('Courier New', 20))],
                           [sg.HSep(pad=((0, 0), (0, 4)))]])],
               [sg.Frame('Model settings', [
@@ -32,35 +32,32 @@ def train_layout():
                              sg.Radio("Adam", group_id=3, key="-ADAM-", enable_events=True,
                                       circle_color='blue')]],
                             border_width=0,)],
-                  [sg.Frame('', [[sg.Text('Learning rate', size=(15, 1)),
-                                  sg.Slider((0.001, 0.3), orientation='horizontal', resolution=0.001, pad=((0, 0), (0, 5)),
+                  [sg.Frame('Optimizer Learning rate:',
+                                  [[sg.Slider((0.001, 0.3), orientation='horizontal', resolution=0.001, pad=((0, 0), (0, 5)),
                                             default_value=0.001, relief=sg.RELIEF_FLAT, trough_color='#e3e3e3',
                                             key="-LR-",
-                                            size=(20, 16))],
-                                 [sg.Text('Decay', size=(15, 1)),
-                                  sg.Slider((0, 0.1), orientation='horizontal', resolution=0.001, pad=((0, 0), (0, 5)),
+                                            size=(20, 16))]],
+                                          border_width=0)],
+                  [sg.Frame('Optimizer Decay:',
+                            [[sg.Slider((0, 0.1), orientation='horizontal', resolution=0.001, pad=((0, 0), (0, 5)),
                                             default_value=0, relief=sg.RELIEF_FLAT, trough_color='#e3e3e3', key="-DECAY-",
-                                            size=(20, 16))],
-                                 [sg.Text('Model Save Name', size=(15, 1)),
-                                  sg.Input(size=(20, 16), pad=((0, 0), (0, 5)), enable_events=True, key="-MODEL SAVE NAME-", )],
-                                 ],
-                            expand_x=True, expand_y=True, element_justification='center', border_width=0, pad=(0, 0),
-                            ),
-                   sg.Frame('', [[sg.Image(key="-FD IMAGE-")]],
-                            expand_x=True, expand_y=True, border_width=0, pad=(0, 0),
-                            element_justification='center')],
+                                            size=(20, 16))]],
+                            border_width=0)],
+                  [sg.Frame('Model save name:',
+                            [[sg.Input(size=(20, 16), pad=((0, 0), (0, 5)), enable_events=True, key="-MODEL SAVE NAME-", )]],
+                            border_width=0)],
               ], expand_x=True, expand_y=True, border_width=0, font=('Courier New', 11))],
 
               [sg.Frame("",
-                        [[
-                            sg.Button("Back", enable_events=True, size=(10, 1), font=('Courier New', 12))]],
+                        [[sg.Button("Back", enable_events=True, size=(10, 1), font=('Courier New', 12)),
+                          sg.Button("Train", enable_events=True, size=(10, 1), font=('Courier New', 12))]],
                         element_justification='center', border_width=0, pad=((0, 0), (16, 0)),
                         vertical_alignment='center')],
               ]
     return layout
 
 
-def train_loop(window):
+def train_settings_loop(window):
     while True:
         event, values = window.read()
         width, height = (390, 180)

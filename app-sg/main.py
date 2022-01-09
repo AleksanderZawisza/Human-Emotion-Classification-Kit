@@ -5,7 +5,7 @@ from load_page import load_layout, load_loop
 from prediction_page import prediction_layout, predict_loop
 from progress_page import progress_layout
 from result_page import result_layout
-from train_page import train_layout, train_loop
+from train_settings_page import train_settings_layout, train_settings_loop
 from utils import back_event
 from utils_pt_train import ResNet
 import cv2
@@ -24,7 +24,7 @@ class HECKApp:
         layout4 = prediction_layout()
         layout5 = progress_layout()
         layout6 = result_layout()
-        layout7 = train_layout()
+        layout7 = train_settings_layout()
 
         # ----------- Create actual layout using Columns and a row of Buttons -----------
         layout = [[sg.Column(layout1, key='-COL1-', element_justification='center', vertical_alignment='c',
@@ -66,7 +66,7 @@ class HECKApp:
             if event == 'Train models':
                 window[f'-COL1-'].update(visible=False)
                 window[f'-COL7-'].update(visible=True)
-                train_loop(window)
+                train_settings_loop(window)
             if 'Back' in event:
                 back_event(window)
         window.close()
