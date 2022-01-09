@@ -5,3 +5,4 @@
 /app-sg/models/*.h5
 /app-sg/predictions/*
 *.zip
+/app-sg/dist/*
