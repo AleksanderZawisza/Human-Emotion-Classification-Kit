@@ -4,9 +4,10 @@ import PySimpleGUI as sg
 def base_layout():
     layout = [[sg.Text('Human Emotion Classification Kit', font=('Courier New', 25), pad=((0, 0), (60, 0)))],
               [sg.HSep(pad=((0, 0), (0, 26)))],
-              [sg.Button('Predict emotions', size=(30, 2), pad=((0, 0), (50, 0)), font=('Courier New', 14))],
-              [sg.Button('Load images', size=(30, 2), pad=((0, 0), (50, 0)), font=('Courier New', 14))],
-              [sg.Button('Settings', size=(30, 2), pad=((0, 0), (50, 0)), font=('Courier New', 14))]]
+              [sg.Button('Predict emotions', size=(30, 2), pad=((0, 0), (35, 0)), font=('Courier New', 14))],
+              [sg.Button('Load images', size=(30, 2), pad=((0, 0), (35, 0)), font=('Courier New', 14))],
+              [sg.Button('Train models', size=(30, 2), pad=((0, 0), (35, 0)), font=('Courier New', 14))],
+              [sg.Button('Settings', size=(30, 2), pad=((0, 0), (35, 0)), font=('Courier New', 14))]]
     return layout
 
 
