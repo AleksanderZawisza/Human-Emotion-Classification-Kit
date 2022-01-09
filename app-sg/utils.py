@@ -15,6 +15,7 @@ def back_event(window):
     window[f'-COL2-'].update(visible=False)
     window[f'-COL3-'].update(visible=False)
     window[f'-COL4-'].update(visible=False)
+    window[f'-COL7-'].update(visible=False)
     window[f'-COL1-'].update(visible=True)
 
 

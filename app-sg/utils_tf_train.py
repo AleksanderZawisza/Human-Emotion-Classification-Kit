@@ -243,11 +243,13 @@ def image_generator(dataset, aug=False, BS=32):
 
 if __name__ == "__main__":
     SGD_LEARNING_RATE = 0.01
+    ADAM_LEARNING_RATE = 0.001
     SGD_DECAY = 0.0001
     EPOCHS = 5
     BS = 32
     Resize_pixelsize = 197
     sgd = tf.keras.optimizers.SGD(lr=SGD_LEARNING_RATE, momentum=0.9, decay=SGD_DECAY, nesterov=True)
+    optim = tf.keras.optimizers.Adam(lr=ADAM_LEARNING_RATE, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.0)
 
     print('loading models')
     rn9 = EmotionsRN9()
@@ -256,7 +258,9 @@ if __name__ == "__main__":
     # print(rn18)
     # rn34 = EmotionsRN34()
     # print(rn34)
-    # rn50 = tf.keras.applications.resnet50.ResNet50(weights=None, classes=7)
+    # rn50 = tf.keras.applications.ResNet50(weights=None, classes=7)
+    # rn101 = tf.keras.applications.ResNet101(weights=None, classes=7)
+    # rn152 = tf.keras.applications.ResNet152(weights=None, classes=7)
     # print(rn50)
     # rn34.save('rn34.h5')
 
