@@ -2,11 +2,48 @@ import torch.nn as nn
 import torch
 import torch.nn.functional as F
 
+import cv2
+import numpy as np
+import torchvision.transforms as tt
+from PIL import Image
+
+from torchvision.datasets import ImageFolder
+from torch.utils.data import DataLoader
+
+from sklearn.metrics import precision_score, f1_score, recall_score, roc_auc_score, accuracy_score
+from sklearn.preprocessing import OneHotEncoder
+
 
 def accuracy(labels, outputs):
     _, preds = torch.max(outputs, dim=1)
     return torch.tensor(torch.sum(preds == labels).item() / len(preds))
 
+
+def acc_sc(labels, preds):
+    return torch.tensor(accuracy_score(labels, preds))
+
+
+def f1_sc(labels, preds):
+    return torch.tensor(f1_score(labels, preds, average='weighted'))
+
+
+def recall_sc(labels, preds):
+    return torch.tensor(recall_score(labels, preds, average='weighted'))
+
+
+def auc_roc_sc(labels, preds):
+    enc = OneHotEncoder(sparse=False)
+    enc.fit([[0], [1], [2], [3], [4], [5], [6]])
+    one_hot_true = enc.transform(np.array(labels).reshape(-1, 1))
+    one_hot_pred = enc.transform(np.array(preds).reshape(-1, 1))
+    return torch.tensor(roc_auc_score(one_hot_true, one_hot_pred, average='weighted'))
+
+
+def precision_sc(labels, preds):
+    return torch.tensor(precision_score(labels, preds, average='weighted'))
+
+
+# model utils
 
 def conv_block(in_channels, out_channels, pool=False):
     layers = [nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1),
@@ -21,13 +58,14 @@ class ImageClassificationBase(nn.Module):
         images, labels = batch
         out = self(images)
         loss = F.cross_entropy(out, labels)
-        return loss
+        _, preds = torch.max(out, dim=1)
+        return [loss, preds, labels]
 
     def validation_step(self, batch):
         images, labels = batch
         out = self(images)
         loss = F.cross_entropy(out, labels)
-        acc = accuracy(out, labels)
+        acc = accuracy(labels, out)
         return {'val_loss': loss.detach(), 'val_acc': acc}
 
     def validation_epoch_end(self, outputs):
@@ -125,7 +163,7 @@ class Block(nn.Module):
         return x
 
 
-class ResNetBase(nn.Module):
+class ResNetBase(ImageClassificationBase):
     def __init__(self, num_layers, block, image_channels, num_classes):
         assert num_layers in [18, 34, 50, 101, 152], f'ResNet{num_layers}: Unknown architecture! Number of layers has ' \
                                                      f'to be 18, 34, 50, 101, or 152 '
@@ -204,3 +242,152 @@ def ResNet101(img_channels=3, num_classes=1000):
 
 def ResNet152(img_channels=3, num_classes=1000):
     return ResNetBase(152, Block, img_channels, num_classes)
+
+
+# training utils
+
+@torch.no_grad()
+def evaluate(model, val_loader):
+    model.eval()
+    outputs = [model.validation_step(batch) for batch in val_loader]
+    return model.validation_epoch_end(outputs)
+
+
+def get_lr(optimizer):
+    for param_group in optimizer.param_groups:
+        return param_group['lr']
+
+
+def get_default_device():
+    if torch.cuda.is_available():
+        return torch.device('cuda')
+    else:
+        return torch.device('cpu')
+
+
+def to_device(data, device):
+    if isinstance(data, (list, tuple)):
+        return [to_device(x, device) for x in data]
+    return data.to(device, non_blocking=True)
+
+
+class DeviceDataLoader():
+    def __init__(self, dl, device):
+        self.dl = dl
+        self.device = device
+
+    def __iter__(self):
+        for b in self.dl:
+            yield to_device(b, self.device)
+
+    def __len__(self):
+        return len(self.dl)
+
+
+def train_cycle_pt(epochs, max_lr, model, train_loader, val_loader,
+                   weight_decay=0, grad_clip=None, opt_func=torch.optim.SGD):
+    torch.cuda.empty_cache()
+    history = []
+
+    # Set up custom optimizer with weight decay
+    optimizer = opt_func(model.parameters(), max_lr, weight_decay=weight_decay)
+    # Set up one-cycle learning rate scheduler
+    sched = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr, epochs=epochs,
+                                                steps_per_epoch=len(train_loader))
+
+    for epoch in range(epochs):
+        # Training Phase
+        model.train()
+        train_losses = []
+        predss = []
+        labelss = []
+
+        lrs = []
+        for batch in train_loader:
+            data = model.training_step(batch)
+            loss = data[0]
+            preds = data[1].cpu()
+            labels = data[2].cpu()
+            predss.extend(preds)
+            labelss.extend(labels)
+            train_losses.append(loss)
+            loss.backward()
+
+            # Gradient clipping
+            if grad_clip:
+                nn.utils.clip_grad_value_(model.parameters(), grad_clip)
+
+            optimizer.step()
+            optimizer.zero_grad()
+
+            # Record & update learning rate
+            lrs.append(get_lr(optimizer))
+            sched.step()
+
+        # Validation phase
+        result = evaluate(model, val_loader)
+        result['train_loss'] = torch.stack(train_losses).mean().item()
+        result['train_acc'] = acc_sc(labelss, predss).item()
+        result['train_f1'] = f1_sc(labelss, predss).item()
+        result['train_racall'] = recall_sc(labelss, predss).item()
+        result['train_auc_roc'] = auc_roc_sc(labelss, predss).item()
+        result['train_precision'] = precision_sc(labelss, predss).item()
+        result['lrs'] = lrs
+        model.epoch_end(epoch, result)
+        history.append(result)
+    return history
+
+
+def make_data_loaders_pt(data_dir):
+    device = get_default_device()
+    # torch.cuda.empty_cache()
+    train_tfms = tt.Compose([tt.Resize((64, 64)),
+                             tt.Grayscale(num_output_channels=1),
+                             tt.RandomHorizontalFlip(),
+                             tt.RandomRotation(30),
+                             tt.ToTensor()])
+    valid_tfms = tt.Compose([tt.Resize((64, 64)),
+                             tt.Grayscale(num_output_channels=1),
+                             tt.ToTensor()])
+    train_ds = ImageFolder(data_dir + '/test', train_tfms)
+    valid_ds = ImageFolder(data_dir + '/dev', valid_tfms)
+    batch_size = 64
+    train_dl = DataLoader(train_ds, batch_size, shuffle=True, num_workers=2, pin_memory=True)
+    valid_dl = DataLoader(valid_ds, batch_size * 2, num_workers=2, pin_memory=True)
+    train_dl = DeviceDataLoader(train_dl, device)
+    valid_dl = DeviceDataLoader(valid_dl, device)
+    return train_dl, valid_dl, device
+
+
+if __name__ == "__main__":
+    # model = ResNet18(img_channels=1, num_classes=7)
+    # image_path = "example_images/sad1.png"
+    # img = cv2.imread(image_path)
+    # img = np.asarray(img)
+    #
+    # preprocess = tt.Compose([tt.Resize((64, 64)),
+    #                          tt.Grayscale(num_output_channels=1),
+    #                          tt.ToTensor()])
+    #
+    # img_preprocessed = preprocess(Image.fromarray(img))
+    # batch_img_tensor = torch.unsqueeze(img_preprocessed, 0)
+    # out = model(batch_img_tensor).to("cuda")
+    # percentage = torch.nn.functional.softmax(out, dim=1)[0] * 100  # procenty
+    # print(percentage.tolist())
+    print("Detected device:")
+    print(get_default_device())
+
+    data_dir = 'C:/Users/Aleksander Podsiad/Desktop/Projekt Emocje/Dane'
+    # lokalizacja folderu z danymi test, train i dev, jako train używam test bo inaczej zamula
+    train_dl, valid_dl, device = make_data_loaders_pt(data_dir)
+    history = []
+    model = to_device(ResNet18(1, 7), device)
+    epochs = 3
+    max_lr = 0.001
+    grad_clip = 0.2
+    weight_decay = 1e-4
+    opt_func = torch.optim.SGD  # torch.optim.Adam
+    history += train_cycle_pt(epochs, max_lr, model, train_dl, valid_dl,
+                              grad_clip=grad_clip, weight_decay=weight_decay, opt_func=opt_func)
+    train_accs = [x['train_acc'] for x in history]
+    print(train_accs)
