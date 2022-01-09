@@ -95,7 +95,7 @@ def progress_loop(window, chosen_stuff, values, faceCascade, models, predictor):
             sg.cprint("* Prediction cancelled", text_color='red')
             window[f'-COL5-'].update(visible=False)
             window[f'-COL4-'].update(visible=True)
-            return models, predictor, go_menu
+            return models, predictor
 
         if os.path.isdir(chosen_path):
             pics_in_folder = list_all_pictures([chosen_path])
