@@ -30,7 +30,7 @@ def train_layout():
     return layout
 
 
-def train_epoch_pt(epoch, model, history, optimizer, train_loader, grad_clip=None):
+def train_epoch_pt(epoch, model, history, optimizer, train_loader, window, grad_clip=None):
     model.train()
     train_losses = []
     predss = []
@@ -38,6 +38,7 @@ def train_epoch_pt(epoch, model, history, optimizer, train_loader, grad_clip=Non
     i = 1
     n = len(train_loader)
     for batch in train_loader:
+        event, values = window.read(0)
         data = model.training_step(batch)
         loss = data[0]
         preds = data[1].cpu()
@@ -163,7 +164,7 @@ def train_loop(window, models):
             return models
 
         if 'PyTorch' in model_name:
-            history = train_epoch_pt(epoch, model, history, optimizer, train_loader, grad_clip=0.2)
+            history = train_epoch_pt(epoch, model, history, optimizer, train_loader, window, grad_clip=0.2)
         else:
             pass
 
@@ -187,7 +188,7 @@ def train_loop(window, models):
     window["-MENU-"].update(disabled=False)
 
     while True:
-        event, values = window.read()
+        event, values = window.read(0)
 
         if event == "Exit" or event == sg.WIN_CLOSED:
             break
