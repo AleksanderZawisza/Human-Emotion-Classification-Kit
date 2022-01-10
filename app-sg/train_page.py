@@ -61,11 +61,11 @@ def train_epoch_pt(epoch, model, history, optimizer, train_loader, window, grad_
     # Validation phase
     result = {}
     result['train_loss'] = torch.stack(train_losses).mean().item()
-    result['train_acc'] = acc_sc(labelss, predss).item()
-    result['train_f1'] = f1_sc(labelss, predss).item()
-    result['train_recall'] = recall_sc(labelss, predss).item()
-    result['train_auc_roc'] = auc_roc_sc(labelss, predss).item()
-    result['train_precision'] = precision_sc(labelss, predss).item()
+    result['train_acc'] = acc_sc(labelss, predss)
+    result['train_f1'] = f1_sc(labelss, predss)
+    result['train_recall'] = recall_sc(labelss, predss)
+    result['train_auc_roc'] = auc_roc_sc(labelss, predss)
+    result['train_precision'] = precision_sc(labelss, predss)
     model.epoch_end(epoch, result)
     history.append(result)
     return history

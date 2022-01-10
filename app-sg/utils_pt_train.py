@@ -12,21 +12,21 @@ from sklearn.metrics import precision_score, f1_score, recall_score, roc_auc_sco
 from sklearn.preprocessing import OneHotEncoder
 
 
-def accuracy(labels, outputs):
-    _, preds = torch.max(outputs, dim=1)
-    return torch.tensor(torch.sum(preds == labels).item() / len(preds))
+# def accuracy(labels, outputs):
+#     _, preds = torch.max(outputs, dim=1)
+#     return torch.tensor(torch.sum(preds == labels).item() / len(preds))
 
 
 def acc_sc(labels, preds):
-    return torch.tensor(accuracy_score(labels, preds))
+    return accuracy_score(labels, preds)
 
 
 def f1_sc(labels, preds):
-    return torch.tensor(f1_score(labels, preds, average='weighted'))
+    return f1_score(labels, preds, average='weighted')
 
 
 def recall_sc(labels, preds):
-    return torch.tensor(recall_score(labels, preds, average='weighted'))
+    return recall_score(labels, preds, average='weighted')
 
 
 def auc_roc_sc(labels, preds):
@@ -34,11 +34,11 @@ def auc_roc_sc(labels, preds):
     enc.fit([[0], [1], [2], [3], [4], [5], [6]])
     one_hot_true = enc.transform(np.array(labels).reshape(-1, 1))
     one_hot_pred = enc.transform(np.array(preds).reshape(-1, 1))
-    return torch.tensor(roc_auc_score(one_hot_true, one_hot_pred, average='weighted'))
+    return roc_auc_score(one_hot_true, one_hot_pred, average='weighted')
 
 
 def precision_sc(labels, preds):
-    return torch.tensor(precision_score(labels, preds, average='weighted'))
+    return precision_score(labels, preds, average='weighted')
 
 
 # model utils
@@ -59,12 +59,12 @@ class ImageClassificationBase(nn.Module):
         _, preds = torch.max(out, dim=1)
         return [loss, preds, labels]
 
-    def validation_step(self, batch):
-        images, labels = batch
-        out = self(images)
-        loss = F.cross_entropy(out, labels)
-        acc = accuracy(labels, out)
-        return {'val_loss': loss.detach(), 'val_acc': acc}
+    # def validation_step(self, batch):
+    #     images, labels = batch
+    #     out = self(images)
+    #     loss = F.cross_entropy(out, labels)
+    #     acc = accuracy(labels, out)
+    #     return {'val_loss': loss.detach(), 'val_acc': acc}
 
     def validation_epoch_end(self, outputs):
         batch_losses = [x['val_loss'] for x in outputs]
@@ -244,12 +244,12 @@ def ResNet152(img_channels=3, num_classes=1000):
 
 # training utils
 
-@torch.no_grad()
-def evaluate(model, train_loader):
-    model.eval()
-    batch = next(iter(train_loader))
-    outputs = model.validation_step(batch)
-    return model.validation_epoch_end(outputs)
+# @torch.no_grad()
+# def evaluate(model, train_loader):
+#     model.eval()
+#     batch = next(iter(train_loader))
+#     outputs = model.validation_step(batch)
+#     return model.validation_epoch_end(outputs)
 
 
 # def get_lr(optimizer):
