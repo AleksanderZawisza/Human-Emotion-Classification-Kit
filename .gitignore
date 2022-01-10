@@ -6,3 +6,5 @@
 /app-sg/predictions/*
 *.zip
 /app-sg/dist/*
+/app-sg/example_images/*
+/app-sg/score_plots/*
