@@ -2,10 +2,8 @@ import torch.nn as nn
 import torch
 import torch.nn.functional as F
 
-import cv2
 import numpy as np
 import torchvision.transforms as tt
-from PIL import Image
 
 from torchvision.datasets import ImageFolder
 from torch.utils.data import DataLoader
@@ -76,8 +74,8 @@ class ImageClassificationBase(nn.Module):
         return {'val_loss': epoch_loss.item(), 'val_acc': epoch_acc.item()}
 
     def epoch_end(self, epoch, result):
-        print("Epoch [{}], last_lr: {:.5f}, train_loss: {:.4f}, val_loss: {:.4f}, val_acc: {:.4f}".format(
-            epoch, result['lrs'][-1], result['train_loss'], result['val_loss'], result['val_acc']))
+        print("Epoch [{}], train_loss: {:.4f}, train_acc: {:.4f}".format(
+            epoch, result['train_loss'], result['train_acc']))
 
 
 class ResNet(ImageClassificationBase):  # ResNet9
@@ -247,15 +245,16 @@ def ResNet152(img_channels=3, num_classes=1000):
 # training utils
 
 @torch.no_grad()
-def evaluate(model, val_loader):
+def evaluate(model, train_loader):
     model.eval()
-    outputs = [model.validation_step(batch) for batch in val_loader]
+    batch = next(iter(train_loader))
+    outputs = model.validation_step(batch)
     return model.validation_epoch_end(outputs)
 
 
-def get_lr(optimizer):
-    for param_group in optimizer.param_groups:
-        return param_group['lr']
+# def get_lr(optimizer):
+#     for param_group in optimizer.param_groups:
+#         return param_group['lr']
 
 
 def get_default_device():
@@ -284,61 +283,28 @@ class DeviceDataLoader():
         return len(self.dl)
 
 
-def train_cycle_pt(epochs, max_lr, model, train_loader, val_loader,
-                   weight_decay=0, grad_clip=None, opt_func=torch.optim.SGD):
-    torch.cuda.empty_cache()
-    history = []
-
-    # Set up custom optimizer with weight decay
-    optimizer = opt_func(model.parameters(), max_lr, weight_decay=weight_decay)
-    # Set up one-cycle learning rate scheduler
-    sched = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr, epochs=epochs,
-                                                steps_per_epoch=len(train_loader))
-
-    for epoch in range(epochs):
-        # Training Phase
-        model.train()
-        train_losses = []
-        predss = []
-        labelss = []
-
-        lrs = []
-        for batch in train_loader:
-            data = model.training_step(batch)
-            loss = data[0]
-            preds = data[1].cpu()
-            labels = data[2].cpu()
-            predss.extend(preds)
-            labelss.extend(labels)
-            train_losses.append(loss)
-            loss.backward()
-
-            # Gradient clipping
-            if grad_clip:
-                nn.utils.clip_grad_value_(model.parameters(), grad_clip)
-
-            optimizer.step()
-            optimizer.zero_grad()
-
-            # Record & update learning rate
-            lrs.append(get_lr(optimizer))
-            sched.step()
-
-        # Validation phase
-        result = evaluate(model, val_loader)
-        result['train_loss'] = torch.stack(train_losses).mean().item()
-        result['train_acc'] = acc_sc(labelss, predss).item()
-        result['train_f1'] = f1_sc(labelss, predss).item()
-        result['train_racall'] = recall_sc(labelss, predss).item()
-        result['train_auc_roc'] = auc_roc_sc(labelss, predss).item()
-        result['train_precision'] = precision_sc(labelss, predss).item()
-        result['lrs'] = lrs
-        model.epoch_end(epoch, result)
-        history.append(result)
-    return history
+# def make_data_loaders_pt(data_dir):
+#     device = get_default_device()
+#     # torch.cuda.empty_cache()
+#     train_tfms = tt.Compose([tt.Resize((64, 64)),
+#                              tt.Grayscale(num_output_channels=1),
+#                              tt.RandomHorizontalFlip(),
+#                              tt.RandomRotation(30),
+#                              tt.ToTensor()])
+#     valid_tfms = tt.Compose([tt.Resize((64, 64)),
+#                              tt.Grayscale(num_output_channels=1),
+#                              tt.ToTensor()])
+#     train_ds = ImageFolder(data_dir + '/test', train_tfms)
+#     valid_ds = ImageFolder(data_dir + '/dev', valid_tfms)
+#     batch_size = 64
+#     train_dl = DataLoader(train_ds, batch_size, shuffle=True, num_workers=2, pin_memory=True)
+#     valid_dl = DataLoader(valid_ds, batch_size * 2, num_workers=2, pin_memory=True)
+#     train_dl = DeviceDataLoader(train_dl, device)
+#     valid_dl = DeviceDataLoader(valid_dl, device)
+#     return train_dl, valid_dl, device
 
 
-def make_data_loaders_pt(data_dir):
+def make_train_loader_pt(data_dir, batch_size):
     device = get_default_device()
     # torch.cuda.empty_cache()
     train_tfms = tt.Compose([tt.Resize((64, 64)),
@@ -346,17 +312,64 @@ def make_data_loaders_pt(data_dir):
                              tt.RandomHorizontalFlip(),
                              tt.RandomRotation(30),
                              tt.ToTensor()])
-    valid_tfms = tt.Compose([tt.Resize((64, 64)),
-                             tt.Grayscale(num_output_channels=1),
-                             tt.ToTensor()])
-    train_ds = ImageFolder(data_dir + '/test', train_tfms)
-    valid_ds = ImageFolder(data_dir + '/dev', valid_tfms)
-    batch_size = 64
+    train_ds = ImageFolder(data_dir, train_tfms)
     train_dl = DataLoader(train_ds, batch_size, shuffle=True, num_workers=2, pin_memory=True)
-    valid_dl = DataLoader(valid_ds, batch_size * 2, num_workers=2, pin_memory=True)
     train_dl = DeviceDataLoader(train_dl, device)
-    valid_dl = DeviceDataLoader(valid_dl, device)
-    return train_dl, valid_dl, device
+    return train_dl, device
+
+
+# def train_cycle_pt(epochs, max_lr, model, train_loader, val_loader, window,
+#                    weight_decay=0, grad_clip=None, opt_func=torch.optim.SGD):
+#     torch.cuda.empty_cache()
+#     history = []
+#
+#     # Set up custom optimizer with weight decay
+#     optimizer = opt_func(model.parameters(), max_lr, weight_decay=weight_decay)
+#     # Set up one-cycle learning rate scheduler
+#     sched = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr, epochs=epochs,
+#                                                 steps_per_epoch=len(train_loader))
+#
+#     for epoch in range(epochs):
+#         # Training Phase
+#         model.train()
+#         train_losses = []
+#         predss = []
+#         labelss = []
+#
+#         lrs = []
+#         for batch in train_loader:
+#             data = model.training_step(batch)
+#             loss = data[0]
+#             preds = data[1].cpu()
+#             labels = data[2].cpu()
+#             predss.extend(preds)
+#             labelss.extend(labels)
+#             train_losses.append(loss)
+#             loss.backward()
+#
+#             # Gradient clipping
+#             if grad_clip:
+#                 nn.utils.clip_grad_value_(model.parameters(), grad_clip)
+#
+#             optimizer.step()
+#             optimizer.zero_grad()
+#
+#             # Record & update learning rate
+#             lrs.append(get_lr(optimizer))
+#             sched.step()
+#
+#         # Validation phase
+#         result = evaluate(model, val_loader)
+#         result['train_loss'] = torch.stack(train_losses).mean().item()
+#         result['train_acc'] = acc_sc(labelss, predss).item()
+#         result['train_f1'] = f1_sc(labelss, predss).item()
+#         result['train_racall'] = recall_sc(labelss, predss).item()
+#         result['train_auc_roc'] = auc_roc_sc(labelss, predss).item()
+#         result['train_precision'] = precision_sc(labelss, predss).item()
+#         result['lrs'] = lrs
+#         model.epoch_end(epoch, result)
+#         history.append(result)
+#     return history
 
 
 if __name__ == "__main__":
