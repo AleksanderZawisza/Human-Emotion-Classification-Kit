@@ -132,6 +132,16 @@ def train_settings_loop(window):
                 trainfolderstr += f"{emotion}:\n {imagescnt} images found\n"
 
             if all_emotions_are_there:
+                for f in os.listdir(folder):
+                    if os.path.isdir(os.path.join(folder, f)):
+                        if f not in ['anger', 'disgust', 'fear', 'happiness', 'neutrality', 'sadness', 'surprise']:
+                            sg.PopupError(f"Bad subfolder in main folder: '{f}'", title='ERROR')
+                            window["-TRAIN FOLDER-"].update('')
+                            window['Train'].update(disabled=True)
+                            all_emotions_are_there = False
+                            break
+
+            if all_emotions_are_there:
                 window['-TRAIN SUBFOLDERS-'].update(trainfolderstr)
                 window['Train'].update(disabled=False)
 
