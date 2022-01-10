@@ -31,7 +31,6 @@ def train_layout():
 
 
 def train_epoch_pt(epoch, model, history, optimizer, train_loader, window, grad_clip=None):
-    model.train()
     train_losses = []
     predss = []
     labelss = []
@@ -140,9 +139,11 @@ def train_loop(window, models):
         else:
             opt_func = torch.optim.SGD
         optimizer = opt_func(model.parameters(), lr, weight_decay=weight_decay)
+        model.train()
     else:
         pass
 
+    sg.cprint("* Model has been created")
     history = []
     for epoch in range(n_epochs):
         event, values = window.read(0)
