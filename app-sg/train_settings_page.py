@@ -7,7 +7,7 @@ import os
 
 def train_settings_layout():
     layout = [[sg.Column([[sg.Text('Change training settings', font=('Courier New', 20))],
-                          [sg.HSep(pad=((0, 0), (0, 4)))]])],
+                          [sg.HSep(pad=((0, 0), (0, 46)))]])],
               [sg.Frame('Model settings', [
                   [sg.Text('Choose model:')],
                   [sg.DropDown(['TensorFlow_ResNet9',
@@ -22,7 +22,7 @@ def train_settings_layout():
                                 'PyTorch_ResNet50',
                                 'PyTorch_ResNet101',
                                 'PyTorch_ResNet152',
-                                ], key='-TRAIN DROPDOWN-',
+                                ],default_value = 'TensorFlow_ResNet9', key='-TRAIN DROPDOWN-',
                                background_color='#e3e3e3',
                                auto_size_text=True, expand_x=True, readonly=True, text_color='black',
                                enable_events=True)],
@@ -36,31 +36,57 @@ def train_settings_layout():
                                   [[sg.Slider((0.001, 0.3), orientation='horizontal', resolution=0.001, pad=((0, 0), (0, 5)),
                                             default_value=0.001, relief=sg.RELIEF_FLAT, trough_color='#e3e3e3',
                                             key="-LR-",
-                                            size=(20, 16))]],
+                                            size=(25, 16))]],
                                           border_width=0)],
                   [sg.Frame('Optimizer Decay:',
                             [[sg.Slider((0, 0.1), orientation='horizontal', resolution=0.001, pad=((0, 0), (0, 5)),
                                             default_value=0, relief=sg.RELIEF_FLAT, trough_color='#e3e3e3', key="-DECAY-",
-                                            size=(20, 16))]],
+                                            size=(25, 16))]],
+                            border_width=0)],
+                  [sg.Frame('Epochs:',
+                            [[sg.Slider((1, 300), orientation='horizontal', resolution=1, pad=((0, 0), (0, 5)),
+                                        default_value=30, relief=sg.RELIEF_FLAT, trough_color='#e3e3e3', key="-EPOCHS-",
+                                        size=(25, 16))]],
                             border_width=0)],
                   [sg.Frame('Model save name:',
-                            [[sg.Input(size=(20, 16), pad=((0, 0), (0, 5)), enable_events=True, key="-MODEL SAVE NAME-", )]],
+                            [[sg.Input(default_text='my_model',
+                                       size=(25, 16), pad=((0, 0), (0, 5)), enable_events=True, key="-MODEL SAVE NAME-", )]],
                             border_width=0)],
-              ], expand_x=True, expand_y=True, border_width=0, font=('Courier New', 11))],
+              ], expand_x=True, expand_y=True, border_width=0, font=('Courier New', 11), ),
+               sg.Frame('Train Dataset', [
+                   [sg.Text('Choose train dataset\n(Folder with 7 subfolders named after the 7 emotions):')],
+                   [sg.Text("Folder"),
+                    sg.In(size=(35, 1), enable_events=True, key="-TRAIN FOLDER-", readonly=True, focus=False,
+                          disabled_readonly_background_color='white'),
+                    sg.FolderBrowse(),
+                    ],
+                   [sg.Frame('Files in subfolders:',
+                             [[sg.Text("anger:\n\ndisgust:\n\nfear:\n\nhappiness:\n\nneutrality:\n\nsadness:\n\nsurprise:\n", key="-TRAIN SUBFOLDERS-",
+                                                                 background_color='white',
+                                                                 auto_size_text=True,
+                                                                 expand_y=True,
+                                                                 expand_x=True,
+                                                                 size=(52, 15)
+                                       )]],
+                             border_width=0, pad=((0, 0), (20, 0)))],
+               ], expand_x=True, expand_y=True, border_width=0, pad=((25, 0), (0, 0)), font=('Courier New', 11)),
+
+               ],
 
               [sg.Frame("",
                         [[sg.Button("Back", enable_events=True, size=(10, 1), font=('Courier New', 12)),
-                          sg.Button("Train", enable_events=True, size=(10, 1), font=('Courier New', 12))]],
-                        element_justification='center', border_width=0, pad=((0, 0), (16, 0)),
+                          sg.Button("Train", enable_events=True, size=(10, 1), font=('Courier New', 12),
+                                    disabled=True)]],
+                        element_justification='center', border_width=0, pad=((0, 0), (60, 0)),
                         vertical_alignment='center')],
               ]
     return layout
 
 
 def train_settings_loop(window):
+    all_emotions_are_there = False
     while True:
         event, values = window.read()
-        width, height = (390, 180)
 
         if event == "Exit" or event == sg.WIN_CLOSED:
             break
@@ -69,47 +95,72 @@ def train_settings_loop(window):
             back_event(window)
             return
 
-        if event == "-NO FACE DETECTION-":
-            window['-FACEDET DROPDOWN-'].update(disabled=True)
-            window['-FD1-'].update(disabled=True)
-            window['-FD2-'].update(disabled=True)
-            window['-FD3-'].update(disabled=True)
-            window['-FDSUB-'].update(disabled=True)
-            window["-FD IMAGE-"].update(data=[])
+        if event == "-TRAIN FOLDER-":
+            folder = values["-TRAIN FOLDER-"]
+            emotions = ["anger", "disgust", "fear", "happiness", "neutrality", "sadness", "surprise"]
 
-        if event == "-FACE DETECTION-":
-            window['-FACEDET DROPDOWN-'].update(disabled=False)
-            window['-FD1-'].update(disabled=False)
-            window['-FD2-'].update(disabled=False)
-            window['-FD3-'].update(disabled=False)
-            window['-FDSUB-'].update(disabled=False)
-            event = '-FACEDET DROPDOWN-'
+            trainfolderstr = "anger:\n\ndisgust:\n\nfear:\n\nhappiness:\n\nneutrality:\n\nsadness:\n\nsurprise:\n"
+            window['-TRAIN SUBFOLDERS-'].update(trainfolderstr)
+            all_emotions_are_there = True
 
-        if event == '-FACEDET DROPDOWN-':
-            filepath = values['-FACEDET DROPDOWN-']
-            if os.path.isdir(filepath):
-                file_list = os.listdir(filepath)
-                file_list = [f"{filepath}/{f}" for f in file_list
-                             if os.path.isfile(f"{filepath}/{f}")]
-                filepath = file_list[0]
-            if os.path.isfile(filepath):
+            trainfolderstr = ""
+            for emotion in emotions:
+                if not os.path.isdir(os.path.join(folder, emotion)):
+                    sg.PopupError(f"No '{emotion}' subfolder found in the chosen folder!", title='ERROR')
+                    window["-TRAIN FOLDER-"].update('')
+                    window['Train'].update(disabled=True)
+                    all_emotions_are_there = False
+                    break
+
                 try:
-                    im = Image.open(filepath)
+                    # Get list of files in folder
+                    file_list = os.listdir(os.path.join(folder, emotion))
                 except:
-                    pass
-                width, height = width, height
-                scale = max(im.width / width, im.height / height)
-                if scale > 1:
-                    w, h = int(im.width / scale), int(im.height / scale)
-                    im = im.resize((w, h), resample=Image.CUBIC)
-                with BytesIO() as output:
-                    im.save(output, format="PNG")
-                    data = output.getvalue()
-                window["-FD IMAGE-"].update(data=data)
+                    file_list = []
+
+                files = [f for f in file_list
+                         if os.path.isfile(f"{folder}/{emotion}/{f}")
+                         and f.lower().endswith(('.png', '.jpg', '.jpeg', '.tiff', '.bmp'))]
+                imagescnt = len(files)
+                if imagescnt==0:
+                    sg.PopupError(f"No images found in subfolder '{emotion}'!", title='ERROR')
+                    window["-TRAIN FOLDER-"].update('')
+                    window['Train'].update(disabled=True)
+                    all_emotions_are_there = False
+                    break
+
+                trainfolderstr += f"{emotion}:\n {imagescnt} images found\n"
+
+            if all_emotions_are_there:
+                window['-TRAIN SUBFOLDERS-'].update(trainfolderstr)
+                window['Train'].update(disabled=False)
+
+
+        if event=="-MODEL SAVE NAME-":
+            chars = set(' /<>"\\\\|?*')
+            name = values["-MODEL SAVE NAME-"]
+            if any((c in chars) for c in name):
+                sg.PopupError(f'Forbidden characters in name: /<>"\\|?*', title='ERROR')
+                for c in chars:
+                    name = name.replace(c, '')
+                window["-MODEL SAVE NAME-"].update(name)
+            if name=="":
+                window['Train'].update(disabled=True)
+            else:
+                if all_emotions_are_there:
+                    window['Train'].update(disabled=False)
+
+
+
+
+            # window["-FILE LIST-"].update(fnames)
+            # event = "-FILTER-"
+            # if len(fnames) == 0:
+            #     sg.PopupOK('No images found in folder!', title='SORRY')
 
 
 if __name__ == "__main__":
-    layout = train_layout()
+    layout = train_settings_layout()
     window = sg.Window("Train Page", layout, element_justification='center',
                        size=(800, 600))
     while True:
