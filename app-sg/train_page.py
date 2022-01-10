@@ -1,6 +1,4 @@
 import os
-from sys import stdout
-from tqdm import tqdm
 
 import PySimpleGUI as sg
 import torch.optim
