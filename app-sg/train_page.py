@@ -44,7 +44,7 @@ def train_epoch_pt(epoch, model, history, optimizer, train_loader, window, grad_
         preds = data[1].cpu()
         labels = data[2].cpu()
         acc = sum(preds == labels) / len(preds) * 100
-        sg.cprint("Batch {}/{} VAL ACC: {:.2f}".format(i, n, acc))
+        sg.cprint("Batch {}/{} BATCH ACC: {:.2f}".format(i, n, acc))
         i += 1
         predss.extend(preds)
         labelss.extend(labels)
