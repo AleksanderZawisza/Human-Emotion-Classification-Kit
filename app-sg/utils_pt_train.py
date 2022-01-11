@@ -75,7 +75,7 @@ class ImageClassificationBase(nn.Module):
 
     def epoch_end(self, epoch, result):
         print("Epoch [{}], train_loss: {:.3f}, train_acc: {:.3f}".format(
-            epoch, result['train_loss'], result['train_acc']*100))
+            epoch, result['train_loss'], result['train_acc'] * 100))
 
 
 class ResNet(ImageClassificationBase):  # ResNet9
@@ -306,7 +306,10 @@ class DeviceDataLoader():
 
 def make_train_loader_pt(data_dir, batch_size):
     device = get_default_device()
-    # torch.cuda.empty_cache()
+    try:
+        torch.cuda.empty_cache()
+    except:
+        pass
     train_tfms = tt.Compose([tt.Resize((64, 64)),
                              tt.Grayscale(num_output_channels=1),
                              tt.RandomHorizontalFlip(),
@@ -316,7 +319,6 @@ def make_train_loader_pt(data_dir, batch_size):
     train_dl = DataLoader(train_ds, batch_size, shuffle=True, num_workers=2, pin_memory=True)
     train_dl = DeviceDataLoader(train_dl, device)
     return train_dl, device
-
 
 # def train_cycle_pt(epochs, max_lr, model, train_loader, val_loader, window,
 #                    weight_decay=0, grad_clip=None, opt_func=torch.optim.SGD):
