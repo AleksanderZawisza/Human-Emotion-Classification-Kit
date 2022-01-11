@@ -5,18 +5,29 @@ import cv2
 import os
 import PySimpleGUI as sg
 
-class StopTrainingOnWindowClose(tf.keras.callbacks.Callback):
+class tf_flags_StopSave():
+    def __init__(self, stopped=False, save=False):
+        self.stopped = stopped
+        self.save = save
+
+class StopTrainingOnWindowCloseAndPause(tf.keras.callbacks.Callback):
     """ NewCallback descends from Callback
     """
-    def __init__(self, window):
+    def __init__(self, window, tf_flags):
         """ Save params in constructor
         """
         self.window = window
+        self.tf_flags = tf_flags
 
     def on_train_batch_end(self, batch, logs=None):
         event, values = self.window.read(0)
-        if event == "Exit" or event == sg.WIN_CLOSED:
+        if event == "Exit" or event == sg.WIN_CLOSED or event == '-CANCEL_B-' or event == '-SAVE-':
             self.model.stop_training = True
+            if event == '-CANCEL_B-':
+                self.tf_flags.stopped = True
+            if event == '-SAVE-':
+                self.tf_flags.stopped = True
+                self.tf_flags.save = True
 
 class F1_Score(tf.keras.metrics.Metric):
 
