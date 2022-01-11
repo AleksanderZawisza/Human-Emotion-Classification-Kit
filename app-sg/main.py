@@ -50,10 +50,13 @@ class HECKApp:
 
         usr_model_path = os.getcwd().replace('\\', '/') + "/user_models"
         score_plots_path = os.getcwd().replace('\\', '/') + "/score_plots"
+        models_sc_path = os.getcwd().replace('\\', '/') + "/model_scores"
         if not os.path.isdir(usr_model_path):
             os.makedirs(usr_model_path)
         if not os.path.isdir(score_plots_path):
             os.makedirs(score_plots_path)
+        if not os.path.isdir(models_sc_path):
+            os.makedirs(models_sc_path)
 
         while True:
             event, values = window.read()

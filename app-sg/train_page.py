@@ -11,6 +11,8 @@ from io import BytesIO
 from utils_pt_train import *
 from utils_tf_train import *
 
+from keras import backend as K
+
 
 def train_layout():
     layout = [[sg.Column([[sg.Text('Training in progress', font=('Courier New', 20))],
@@ -91,7 +93,7 @@ def train_epoch_pt(epoch, model, history, optimizer, train_loader, window, grad_
     return history, stopped, save
 
 
-def save_scores_plot(history, model_name, n_epochs, epoch):
+def save_scores_plot(history, model_name, n_epochs, epoch, is_last=False):
     if "PyTorch" in model_name:
         train_losses = [x['train_loss'] for x in history]
         train_accs = [x['train_acc'] for x in history]
@@ -130,7 +132,10 @@ def save_scores_plot(history, model_name, n_epochs, epoch):
     plt.xlim([0, n_epochs - 1])
     plt.legend(['accuracy', 'precision', 'recall', 'f1_score', 'auc_roc'], loc='upper left')
     file_name = model_name + '_epoch_' + str(epoch) + '.png'
-    file_path = os.getcwd() + '/score_plots/' + file_name
+    if is_last:
+        file_path = os.getcwd() + '/model_scores/' + file_name
+    else:
+        file_path = os.getcwd() + '/score_plots/' + file_name
     plt.savefig(file_path, bbox_inches='tight')
     return file_path
 
@@ -164,10 +169,10 @@ def train_loop(window, models):
             model = to_device(ResNet34_pt(1, 7), device)
         elif model_name == 'PyTorch_ResNet50':
             model = to_device(ResNet50_pt(1, 7), device)
-        elif model_name == 'PyTorch_ResNet101':
-            model = to_device(ResNet101_pt(1, 7), device)
-        else:
-            model = to_device(ResNet152_pt(1, 7), device)
+        # elif model_name == 'PyTorch_ResNet101':
+        #     model = to_device(ResNet101_pt(1, 7), device)
+        # else:
+        #     model = to_device(ResNet152_pt(1, 7), device)
 
         if isAdam:
             opt_func = torch.optim.Adam
@@ -183,11 +188,11 @@ def train_loop(window, models):
         elif model_name == 'TensorFlow_ResNet34':
             model = EmotionsRN34()
         elif model_name == 'TensorFlow_ResNet50':
-            model = tf.keras.applications.ResNet50(weights=None, classes=7)
-        elif model_name == 'TensorFlow_ResNet101':
-            model = tf.keras.applications.ResNet101(weights=None, classes=7)
-        else:
-            model = tf.keras.applications.ResNet152(weights=None, classes=7)
+            model = tf.keras.applications.ResNet50(weights=None, classes=7, input_shape=(197, 197, 3))
+        # elif model_name == 'TensorFlow_ResNet101':
+        #     model = tf.keras.applications.ResNet101(weights=None, classes=7, input_shape=(197, 197, 3))
+        # else:
+        #     model = tf.keras.applications.ResNet152(weights=None, classes=7, input_shape=(197, 197, 3))
 
         if isAdam:
             optimizer = tf.keras.optimizers.Adam(lr=lr, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=weight_decay)
@@ -220,7 +225,7 @@ def train_loop(window, models):
             sg.cprint(f'EPOCH [{epoch}]', end='\n', key="-PROGRESS TEXT TRAIN-")
             history, stopped, save = train_epoch_pt(epoch, model, history, optimizer, train_loader, window,
                                                     grad_clip=0.2)
-            filepath = save_scores_plot(history, model_name, n_epochs, epoch)
+            filepath = save_scores_plot(history, model_name, n_epochs, epoch, False)
         if 'TensorFlow' in model_name:
             sg.cprint(f'EPOCH [{epoch}]', end='', key="-PROGRESS TEXT TRAIN-")
             callback = StopTrainingOnWindowCloseAndPause(window, tf_flags)
@@ -231,7 +236,7 @@ def train_loop(window, models):
             for key in tf_metrics.keys():
                 tf_metrics[key].extend(history.history[key])
 
-            filepath = save_scores_plot(tf_metrics, model_name, n_epochs, epoch)
+            filepath = save_scores_plot(tf_metrics, model_name, n_epochs, epoch, False)
 
         event, values = window.read(0)
         if event == "Exit" or event == sg.WIN_CLOSED or event is None:
@@ -240,16 +245,44 @@ def train_loop(window, models):
         if event == '-CANCEL_B-':
             window[f'-COL8-'].update(visible=False)
             window[f'-COL7-'].update(visible=True)
+            if "PyTorch" in model_name:
+                try:
+                    del model
+                    del train_loader
+                    torch.cuda.empty_cache()
+                except:
+                    pass
+            elif "TensorFlow" in model_name:
+                try:
+                    del model
+                    del train_generator
+                    K.clear_session()
+                except:
+                    pass
             return models, go_menu_b
 
         if event == '-SAVE-':
             models[model_name] = model
             if "PyTorch" in model_name:
+                temp = save_scores_plot(history, model_name, n_epochs, epoch, True)
                 model_path = os.getcwd() + "/user_models/" + model_name + '.pth'
                 torch.save(model.state_dict(), model_path)
+                try:
+                    del model
+                    del train_loader
+                    torch.cuda.empty_cache()
+                except:
+                    pass
             elif "TensorFlow" in model_name:
+                temp = save_scores_plot(tf_metrics, model_name, n_epochs, epoch, True)
                 model_path = os.getcwd() + "/user_models/" + model_name + '.h5'
                 model.save(model_path)
+                try:
+                    del model
+                    del train_generator
+                    K.clear_session()
+                except:
+                    pass
             sg.cprint("* Model has been saved", key="-PROGRESS TEXT TRAIN-", text_color='green')
             time.sleep(2)
             window[f'-COL8-'].update(visible=False)
@@ -263,13 +296,26 @@ def train_loop(window, models):
                 else:
                     sg.cprint("* Training was manually stopped", text_color='blue', key="-PROGRESS TEXT TRAIN-")
                 models[model_name] = model
-
                 if "PyTorch" in model_name:
+                    temp = save_scores_plot(history, model_name, n_epochs, epoch, True)
                     model_path = os.getcwd() + "/user_models/" + model_name + '.pth'
                     torch.save(model.state_dict(), model_path)
+                    try:
+                        del model
+                        del train_loader
+                        torch.cuda.empty_cache()
+                    except:
+                        pass
                 elif "TensorFlow" in model_name:
+                    temp = save_scores_plot(tf_metrics, model_name, n_epochs, epoch, True)
                     model_path = os.getcwd() + "/user_models/" + model_name + '.h5'
                     model.save(model_path)
+                    try:
+                        del model
+                        del train_generator
+                        K.clear_session()
+                    except:
+                        pass
 
                 sg.cprint("* Model has been saved", key="-PROGRESS TEXT TRAIN-", text_color='green')
                 time.sleep(2)
@@ -279,8 +325,20 @@ def train_loop(window, models):
             else:
                 if 'TensorFlow' in model_name:
                     sg.cprint("\n* Training cancelled", text_color='red', key="-PROGRESS TEXT TRAIN-")
+                    try:
+                        del model
+                        del train_generator
+                        K.clear_session()
+                    except:
+                        pass
                 else:
                     sg.cprint("* Training cancelled", text_color='red', key="-PROGRESS TEXT TRAIN-")
+                    try:
+                        del model
+                        del train_loader
+                        torch.cuda.empty_cache()
+                    except:
+                        pass
                 time.sleep(2)
                 window[f'-COL8-'].update(visible=False)
                 window[f'-COL7-'].update(visible=True)
@@ -301,6 +359,13 @@ def train_loop(window, models):
             im.save(output, format="PNG")
             data = output.getvalue()
         window["-GRAPH-"].update(data=data)
+        try:
+            path = os.getcwd() + "/score_plots"
+            for filename in os.listdir(path):
+                file_path = path + "/" + filename
+                os.remove(file_path)
+        except:
+            pass
 
     sg.cprint('* Training finished', key="-PROGRESS TEXT TRAIN-")
 
@@ -315,19 +380,46 @@ def train_loop(window, models):
             return models, go_menu_b
 
         if event == '-CANCEL_B-':
+            if "PyTorch" in model_name:
+                try:
+                    del model
+                    del train_loader
+                    torch.cuda.empty_cache()
+                except:
+                    pass
+            elif "TensorFlow" in model_name:
+                try:
+                    del model
+                    del train_generator
+                    K.clear_session()
+                except:
+                    pass
             window[f'-COL8-'].update(visible=False)
             window[f'-COL7-'].update(visible=True)
             return models, go_menu_b
 
         if event == '-SAVE-':
             models[model_name] = model
-
             if "PyTorch" in model_name:
+                temp = save_scores_plot(history, model_name, n_epochs, epoch, True)
                 model_path = os.getcwd() + "/user_models/" + model_name + '.pth'
                 torch.save(model.state_dict(), model_path)
+                try:
+                    del model
+                    del train_loader
+                    torch.cuda.empty_cache()
+                except:
+                    pass
             elif "TensorFlow" in model_name:
+                temp = save_scores_plot(tf_metrics, model_name, n_epochs, epoch, True)
                 model_path = os.getcwd() + "/user_models/" + model_name + '.h5'
                 model.save(model_path)
+                try:
+                    del model
+                    del train_generator
+                    K.clear_session()
+                except:
+                    pass
 
             sg.cprint("* Model has been saved", key="-PROGRESS TEXT TRAIN-", text_color='green')
             time.sleep(2)
@@ -336,6 +428,20 @@ def train_loop(window, models):
             return models, go_menu_b
 
         if event == '-MENU_B-':
+            if "PyTorch" in model_name:
+                try:
+                    del model
+                    del train_loader
+                    torch.cuda.empty_cache()
+                except:
+                    pass
+            elif "TensorFlow" in model_name:
+                try:
+                    del model
+                    del train_generator
+                    K.clear_session()
+                except:
+                    pass
             window[f'-COL8-'].update(visible=False)
             window[f'-COL7-'].update(visible=True)
             go_menu_b = True
