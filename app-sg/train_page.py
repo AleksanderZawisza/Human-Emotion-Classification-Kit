@@ -32,7 +32,6 @@ def train_layout():
               ]
     return layout
 
-
 def train_epoch_pt(epoch, model, history, optimizer, train_loader, window, grad_clip=None):
     train_losses = []
     stopped = False
@@ -210,6 +209,7 @@ def train_loop(window, models):
 
     sg.cprint("* Model has been created", key="-PROGRESS TEXT TRAIN-")
     history = []
+    tf_flags = tf_flags_StopSave()
     stopped = False
     save = False
     for epoch in range(n_epochs):
@@ -222,8 +222,11 @@ def train_loop(window, models):
             filepath = save_scores_plot(history, model_name, n_epochs, epoch)
         if 'TensorFlow' in model_name:
             sg.cprint(f'EPOCH [{epoch}]', end='', key="-PROGRESS TEXT TRAIN-")
+            callback = StopTrainingOnWindowCloseAndPause(window, tf_flags)
             history = model.fit(train_generator, steps_per_epoch=len(samples_train) // BS, epochs=1,
-                                callbacks=[StopTrainingOnWindowClose(window)])
+                                callbacks=[callback])
+            stopped = callback.tf_flags.stopped
+            save = callback.tf_flags.save
             for key in tf_metrics.keys():
                 tf_metrics[key].extend(history.history[key])
 
@@ -248,7 +251,10 @@ def train_loop(window, models):
 
         if stopped:
             if save:
-                sg.cprint("* Training was manually stopped", text_color='blue', key="-PROGRESS TEXT TRAIN-")
+                if 'TensorFlow' in model_name:
+                    sg.cprint("\n* Training was manually stopped", text_color='blue', key="-PROGRESS TEXT TRAIN-")
+                else:
+                    sg.cprint("* Training was manually stopped", text_color='blue', key="-PROGRESS TEXT TRAIN-")
                 models[model_name] = model
                 sg.cprint("* Model has been saved", key="-PROGRESS TEXT TRAIN-", text_color='green')
                 time.sleep(2)
@@ -256,7 +262,10 @@ def train_loop(window, models):
                 window[f'-COL7-'].update(visible=True)
                 return models, go_menu_b
             else:
-                sg.cprint("* Training cancelled", text_color='red', key="-PROGRESS TEXT TRAIN-")
+                if 'TensorFlow' in model_name:
+                    sg.cprint("\n* Training cancelled", text_color='red', key="-PROGRESS TEXT TRAIN-")
+                else:
+                    sg.cprint("* Training cancelled", text_color='red', key="-PROGRESS TEXT TRAIN-")
                 time.sleep(2)
                 window[f'-COL8-'].update(visible=False)
                 window[f'-COL7-'].update(visible=True)
