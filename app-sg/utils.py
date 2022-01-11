@@ -147,7 +147,7 @@ def prediction_combo(img_path, save_dir, model, model_text, detection, faceCasca
         for i, (x, y, w, h) in enumerate(faces):
             img_tmp = img[y:y + h, x:x + w]
 
-            if model_text == '-RESNET9-':
+            if model_text == '-RESNET9-' or "PyTorch" in model_text:
                 out = predict_res9pt(img_tmp, model)
             else:
                 out = predict_res50tf(img_tmp, model, predictor)
@@ -159,7 +159,7 @@ def prediction_combo(img_path, save_dir, model, model_text, detection, faceCasca
             preds.append(out)
 
     if not detection or len(faces) == 0:
-        if model_text == '-RESNET9-':
+        if model_text == '-RESNET9-' or "PyTorch" in model_text:
             out = predict_res9pt(img, model)
         else:
             out = predict_res50tf(img, model, predictor)
@@ -201,6 +201,14 @@ def load_res9pt():
 def load_res50tf():
     model_path = "models/RESNET50-MODYFIKACJA-EPOCHS_30test_acc_0.681.h5"
     return load_model(model_path)
+
+
+def load_custom_model(model_text):
+    model_path = "user_models/" + model_text
+    if "PyTorch" in model_text:
+        return torch.load(model_path)
+    else:
+        return load_model(model_path)
 
 
 def predict_res9pt(img, model):

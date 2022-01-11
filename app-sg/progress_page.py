@@ -1,7 +1,7 @@
 import os.path
 
 import PySimpleGUI as sg
-from utils import list_all_pictures, load_res9pt, load_res50tf, prediction_combo
+from utils import list_all_pictures, load_res9pt, load_res50tf, prediction_combo, load_custom_model
 from result_page import result_loop
 import dlib
 import shutil
@@ -44,8 +44,10 @@ def progress_loop(window, chosen_stuff, values, faceCascade, models, predictor):
 
     if res9pt:
         model_text = '-RESNET9-'
-    else:
+    elif res50tf:
         model_text = '-RESNET50-'
+    else:
+        model_text = values['-MODEL DROPDOWN-']
 
     steps = num_pics + 2
     sg.cprint("* Starting prediction", key="-PROGRESS TEXT-")
@@ -61,6 +63,9 @@ def progress_loop(window, chosen_stuff, values, faceCascade, models, predictor):
     elif res50tf and not models['res50tf']:
         sg.cprint('Loading model...', key="-PROGRESS TEXT-")
         models['res50tf'] = load_res50tf()
+    elif model_text not in models:
+        sg.cprint('Loading model...', key="-PROGRESS TEXT-")
+        models[model_text] = load_custom_model(model_text)
     else:
         sg.cprint('* Model already loaded', key="-PROGRESS TEXT-")
     if not predictor:
@@ -108,18 +113,26 @@ def progress_loop(window, chosen_stuff, values, faceCascade, models, predictor):
 
             for image_path in pics_in_folder:
                 try:
-                    if res9pt:
+                    if res9pt or "PyTorch" in model_text:
+                        if res9pt:
+                            model_name = 'res9pt'
+                        else:
+                            model_name = model_text
                         # out = predict_res9pt(image_path, models['res9pt'])
-                        result_tmp, change_tmp = prediction_combo(image_path, temp_save_dir, models['res9pt'],
+                        result_tmp, change_tmp = prediction_combo(image_path, temp_save_dir, models[model_name],
                                                                   model_text, detection,
                                                                   faceCascade,
                                                                   values['-FD1-'], values['-FD2-'], values['-FD3-'])
                         result_dict.update(result_tmp)
                         change_dict.update(change_tmp)
 
-                    elif res50tf:
+                    elif res50tf or "TensorFlow" in model_text:
+                        if res50tf:
+                            model_name = 'res50tf'
+                        else:
+                            model_name = model_text
                         # out = predict_res50tf(image_path, models['res50tf'], predictor)
-                        result_tmp, change_tmp = prediction_combo(image_path, temp_save_dir, models['res50tf'],
+                        result_tmp, change_tmp = prediction_combo(image_path, temp_save_dir, models[model_name],
                                                                   model_text, detection,
                                                                   faceCascade,
                                                                   values['-FD1-'], values['-FD2-'], values['-FD3-'],
@@ -138,18 +151,26 @@ def progress_loop(window, chosen_stuff, values, faceCascade, models, predictor):
 
         else:
             try:
-                if res9pt:
+                if res9pt or "PyTorch" in model_text:
+                    if res9pt:
+                        model_name = 'res9pt'
+                    else:
+                        model_name = model_text
                     # out = predict_res9pt(image_path, models['res9pt'])
-                    result_tmp, change_tmp = prediction_combo(chosen_path, save_dir, models['res9pt'], model_text,
+                    result_tmp, change_tmp = prediction_combo(chosen_path, save_dir, models[model_name], model_text,
                                                               detection,
                                                               faceCascade,
                                                               values['-FD1-'], values['-FD2-'], values['-FD3-'])
                     result_dict.update(result_tmp)
                     change_dict.update(change_tmp)
 
-                elif res50tf:
+                elif res50tf or "TensorFlow" in model_text:
+                    if res50tf:
+                        model_name = 'res50tf'
+                    else:
+                        model_name = model_text
                     # out = predict_res50tf(image_path, models['res50tf'], predictor)
-                    result_tmp, change_tmp = prediction_combo(chosen_path, save_dir, models['res50tf'], model_text,
+                    result_tmp, change_tmp = prediction_combo(chosen_path, save_dir, models[model_name], model_text,
                                                               detection,
                                                               faceCascade,
                                                               values['-FD1-'], values['-FD2-'], values['-FD3-'],
