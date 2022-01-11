@@ -48,7 +48,7 @@ def progress_loop(window, chosen_stuff, values, faceCascade, models, predictor):
         model_text = '-RESNET50-'
 
     steps = num_pics + 2
-    sg.cprint("* Starting prediction")
+    sg.cprint("* Starting prediction", key="-PROGRESS TEXT-")
     i = 1
 
     # progress_text = ['Loading model...']
@@ -56,13 +56,13 @@ def progress_loop(window, chosen_stuff, values, faceCascade, models, predictor):
     window['-PROGRESS BAR-'].update(i, steps)
 
     if res9pt and not models['res9pt']:
-        sg.cprint('* Loading model...')
+        sg.cprint('* Loading model...', key="-PROGRESS TEXT-")
         models['res9pt'] = load_res9pt()
     elif res50tf and not models['res50tf']:
-        sg.cprint('Loading model...')
+        sg.cprint('Loading model...', key="-PROGRESS TEXT-")
         models['res50tf'] = load_res50tf()
     else:
-        sg.cprint('* Model already loaded')
+        sg.cprint('* Model already loaded', key="-PROGRESS TEXT-")
     if not predictor:
         predictor = dlib.shape_predictor('faceutils/shape_predictor_68_face_landmarks.dat')
 
@@ -70,7 +70,7 @@ def progress_loop(window, chosen_stuff, values, faceCascade, models, predictor):
     window['-PROGRESS BAR-'].update(i, steps)
     # progress_text.append('Predicting emotions and saving results...')
     # window['-PROGRESS TEXT-'].update(progress_text)
-    sg.cprint('* Checking prediction directory...')
+    sg.cprint('* Checking prediction directory...', key="-PROGRESS TEXT-")
     if not os.path.isdir(save_dir):
         os.makedirs(save_dir)
     dirs_already_in_pred = os.listdir(save_dir)
@@ -78,10 +78,11 @@ def progress_loop(window, chosen_stuff, values, faceCascade, models, predictor):
         if os.path.isdir(chosen_path):
             _, folder_name = os.path.split(chosen_path)
             if folder_name in dirs_already_in_pred:
-                sg.cprint(f'* Removing old folder \'{folder_name}\' from prediction directory...')
+                sg.cprint(f'* Removing old folder \'{folder_name}\' from prediction directory...',
+                          key="-PROGRESS TEXT-")
                 shutil.rmtree(f'{save_dir}/{folder_name}')
 
-    sg.cprint('* Predicting emotions and saving results...')
+    sg.cprint('* Predicting emotions and saving results...', key="-PROGRESS TEXT-")
 
     saved_stuff = []
 
@@ -92,7 +93,7 @@ def progress_loop(window, chosen_stuff, values, faceCascade, models, predictor):
             break
 
         if '-CANCEL-' in event:
-            sg.cprint("* Prediction cancelled", text_color='red')
+            sg.cprint("* Prediction cancelled", text_color='red', key="-PROGRESS TEXT-")
             window[f'-COL5-'].update(visible=False)
             window[f'-COL4-'].update(visible=True)
             return models, predictor
@@ -100,7 +101,7 @@ def progress_loop(window, chosen_stuff, values, faceCascade, models, predictor):
         if os.path.isdir(chosen_path):
             pics_in_folder = list_all_pictures([chosen_path])
             text_folder = '* Predicting from: ' + chosen_path
-            sg.cprint(text_folder)
+            sg.cprint(text_folder, key="-PROGRESS TEXT-")
             _, folder_name = os.path.split(chosen_path)
             temp_save_dir = f'{save_dir}/{folder_name}'
             saved_stuff.append(temp_save_dir)
@@ -109,25 +110,29 @@ def progress_loop(window, chosen_stuff, values, faceCascade, models, predictor):
                 try:
                     if res9pt:
                         # out = predict_res9pt(image_path, models['res9pt'])
-                        result_tmp, change_tmp = prediction_combo(image_path, temp_save_dir, models['res9pt'], model_text, detection,
-                                               faceCascade,
-                                               values['-FD1-'], values['-FD2-'], values['-FD3-'])
+                        result_tmp, change_tmp = prediction_combo(image_path, temp_save_dir, models['res9pt'],
+                                                                  model_text, detection,
+                                                                  faceCascade,
+                                                                  values['-FD1-'], values['-FD2-'], values['-FD3-'])
                         result_dict.update(result_tmp)
                         change_dict.update(change_tmp)
 
                     elif res50tf:
                         # out = predict_res50tf(image_path, models['res50tf'], predictor)
-                        result_tmp, change_tmp = prediction_combo(image_path, temp_save_dir, models['res50tf'], model_text, detection,
-                                               faceCascade,
-                                               values['-FD1-'], values['-FD2-'], values['-FD3-'], predictor)
+                        result_tmp, change_tmp = prediction_combo(image_path, temp_save_dir, models['res50tf'],
+                                                                  model_text, detection,
+                                                                  faceCascade,
+                                                                  values['-FD1-'], values['-FD2-'], values['-FD3-'],
+                                                                  predictor)
                         result_dict.update(result_tmp)
                         change_dict.update(change_tmp)
                     tmp_text = '* Processed: ' + image_path
-                    sg.cprint(tmp_text)
+                    sg.cprint(tmp_text, key="-PROGRESS TEXT-")
                     i += 1
                     window['-PROGRESS BAR-'].update(i, steps)
                 except Exception:
-                    sg.cprint('* ERROR PROCESSING: \'' + image_path + '\', IMAGE SKIPPED', text_color='red')
+                    sg.cprint('* ERROR PROCESSING: \'' + image_path + '\', IMAGE SKIPPED', text_color='red',
+                              key="-PROGRESS TEXT-")
                     i += 1
                     window['-PROGRESS BAR-'].update(i, steps)
 
@@ -135,17 +140,20 @@ def progress_loop(window, chosen_stuff, values, faceCascade, models, predictor):
             try:
                 if res9pt:
                     # out = predict_res9pt(image_path, models['res9pt'])
-                    result_tmp, change_tmp = prediction_combo(chosen_path, save_dir, models['res9pt'], model_text, detection,
-                                           faceCascade,
-                                           values['-FD1-'], values['-FD2-'], values['-FD3-'])
+                    result_tmp, change_tmp = prediction_combo(chosen_path, save_dir, models['res9pt'], model_text,
+                                                              detection,
+                                                              faceCascade,
+                                                              values['-FD1-'], values['-FD2-'], values['-FD3-'])
                     result_dict.update(result_tmp)
                     change_dict.update(change_tmp)
 
                 elif res50tf:
                     # out = predict_res50tf(image_path, models['res50tf'], predictor)
-                    result_tmp, change_tmp = prediction_combo(chosen_path, save_dir, models['res50tf'], model_text, detection,
-                                           faceCascade,
-                                           values['-FD1-'], values['-FD2-'], values['-FD3-'], predictor)
+                    result_tmp, change_tmp = prediction_combo(chosen_path, save_dir, models['res50tf'], model_text,
+                                                              detection,
+                                                              faceCascade,
+                                                              values['-FD1-'], values['-FD2-'], values['-FD3-'],
+                                                              predictor)
                     result_dict.update(result_tmp)
                     change_dict.update(change_tmp)
 
@@ -154,18 +162,19 @@ def progress_loop(window, chosen_stuff, values, faceCascade, models, predictor):
                 saved_stuff.append(saved_path)
 
                 tmp_text = '* Processed: ' + chosen_path
-                sg.cprint(tmp_text)
+                sg.cprint(tmp_text, key="-PROGRESS TEXT-")
                 i += 1
                 window['-PROGRESS BAR-'].update(i, steps)
             except Exception:
-                sg.cprint('* ERROR PROCESSING: \'' + chosen_path + '\', IMAGE SKIPPED', text_color='red')
+                sg.cprint('* ERROR PROCESSING: \'' + chosen_path + '\', IMAGE SKIPPED', text_color='red',
+                          key="-PROGRESS TEXT-")
                 i += 1
                 window['-PROGRESS BAR-'].update(i, steps)
 
-    sg.cprint('* Done!')
+    sg.cprint('* Done!', key="-PROGRESS TEXT-")
     # progress_text.append('Done!')
     # window['-PROGRESS TEXT-'].update(progress_text)
-    saved_stuff = list(dict.fromkeys(saved_stuff)) #usuniecie duplikatow
+    saved_stuff = list(dict.fromkeys(saved_stuff))  # usuniecie duplikatow
     window['-CONTINUE-'].update(disabled=False)
     window['-CANCEL-'].update(text='Back')
 

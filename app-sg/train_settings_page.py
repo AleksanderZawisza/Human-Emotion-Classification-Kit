@@ -71,7 +71,7 @@ def train_settings_layout():
                                  expand_y=True,
                                  expand_x=True,
                                  size=(52, 15)
-                                 )]],
+                             )]],
                              border_width=0, pad=((0, 0), (20, 0)))],
                ], expand_x=True, expand_y=True, border_width=0, pad=((25, 0), (0, 0)), font=('Courier New', 11)),
 
@@ -89,7 +89,12 @@ def train_settings_layout():
 
 def train_settings_loop(window, models):
     all_emotions_are_there = False
+    go_menu_b = False
     while True:
+        if go_menu_b:
+            back_event(window)
+            return models
+
         event, values = window.read()
 
         if event == "Exit" or event == sg.WIN_CLOSED:
@@ -166,7 +171,7 @@ def train_settings_loop(window, models):
         if event == "Train":
             window[f'-COL7-'].update(visible=False)
             window[f'-COL8-'].update(visible=True)
-            models = train_loop(window, models)
+            models, go_menu_b = train_loop(window, models)
 
             # window["-FILE LIST-"].update(fnames)
             # event = "-FILTER-"

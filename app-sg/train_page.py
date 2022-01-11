@@ -14,7 +14,7 @@ from utils_tf_train import *
 def train_layout():
     layout = [[sg.Column([[sg.Text('Training in progress', font=('Courier New', 20))],
                           [sg.HSep(pad=((0, 0), (0, 0)))]])],
-              [sg.Multiline(key='-PROGRESS TEXT-', font=('Courier New', 10), size=(90, 8), enable_events=False,
+              [sg.Multiline(key='-PROGRESS TEXT TRAIN-', font=('Courier New', 10), size=(90, 8), enable_events=False,
                             pad=(0, 20), reroute_stdout=True, auto_refresh=True,
                             write_only=True, reroute_cprint=True, disabled=True)],
               [sg.Frame('Training scores:', [[sg.Image(key="-GRAPH-")]],
@@ -23,8 +23,8 @@ def train_layout():
                sg.Frame('', [
                    [sg.Button('Stop & Save', size=(15, 1), font=('Courier New', 12), pad=((10, 10), (90, 20)),
                               key='-SAVE-')],
-                   [sg.Button('Cancel & Back', size=(15, 1), font=('Courier New', 12), pad=(10, 20), key='-CANCEL-')],
-                   [sg.Button('Main menu', size=(15, 1), font=('Courier New', 12), pad=(10, 20), key='-MENU-',
+                   [sg.Button('Cancel & Back', size=(15, 1), font=('Courier New', 12), pad=(10, 20), key='-CANCEL_B-')],
+                   [sg.Button('Main menu', size=(15, 1), font=('Courier New', 12), pad=(10, 20), key='-MENU_B-',
                               disabled=True)],
                ],
                         size=(250, 350), border_width=0, pad=(0, 0), element_justification='center')],
@@ -48,7 +48,7 @@ def train_epoch_pt(epoch, model, history, optimizer, train_loader, window, grad_
             save = False
             return history, stopped, save
 
-        if event == '-CANCEL-':
+        if event == '-CANCEL_B-':
             stopped = True
             save = False
             return history, stopped, save
@@ -63,7 +63,7 @@ def train_epoch_pt(epoch, model, history, optimizer, train_loader, window, grad_
         preds = data[1].cpu()
         labels = data[2].cpu()
         acc = sum(preds == labels) / len(preds) * 100
-        sg.cprint("Batch {}/{} BATCH ACC: {:.2f}".format(i, n, acc))
+        sg.cprint("Batch {}/{} BATCH ACC: {:.2f}".format(i, n, acc), key="-PROGRESS TEXT TRAIN-")
         i += 1
         predss.extend(preds)
         labelss.extend(labels)
@@ -137,9 +137,12 @@ def save_scores_plot(history, model_name, n_epochs, epoch):
 def train_loop(window, models):
     event, values = window.read(0)
 
-    window["-CANCEL-"].update(text="Cancel & Back")
+    window["-CANCEL_B-"].update(text="Cancel & Back")
     window["-SAVE-"].update(text="Stop & Save")
-    window["-MENU-"].update(disabled=True)
+    window["-MENU_B-"].update(disabled=True)
+    window[f"-PROGRESS TEXT TRAIN-"].update("")
+    window[f"-GRAPH-"].update("")
+    go_menu_b = False
 
     n_epochs = int(values['-EPOCHS-'])
     lr = values['-LR-']
@@ -148,22 +151,22 @@ def train_loop(window, models):
     model_name = values['-TRAIN DROPDOWN-']
     data_dir = values['-TRAIN FOLDER-']
 
-    sg.cprint("* Training has started")
+    sg.cprint("* Training has started", key="-PROGRESS TEXT TRAIN-")
 
     if 'PyTorch' in model_name:
         train_loader, device = make_train_loader_pt(data_dir, 64)
         if model_name == 'PyTorch_ResNet9':
             model = to_device(ResNet(1, 7), device)
         elif model_name == 'PyTorch_ResNet18':
-            model = to_device(ResNet18(1, 7), device)
+            model = to_device(ResNet18_pt(1, 7), device)
         elif model_name == 'PyTorch_ResNet34':
-            model = to_device(ResNet34(1, 7), device)
+            model = to_device(ResNet34_pt(1, 7), device)
         elif model_name == 'PyTorch_ResNet50':
-            model = to_device(ResNet50(1, 7), device)
+            model = to_device(ResNet50_pt(1, 7), device)
         elif model_name == 'PyTorch_ResNet101':
-            model = to_device(ResNet101(1, 7), device)
+            model = to_device(ResNet101_pt(1, 7), device)
         else:
-            model = to_device(ResNet152(1, 7), device)
+            model = to_device(ResNet152_pt(1, 7), device)
 
         if isAdam:
             opt_func = torch.optim.Adam
@@ -204,7 +207,7 @@ def train_loop(window, models):
         # train_generator = generator(samples_train, True, batch_size=BS,  window=window)
         tf_metrics = {'loss': [], 'acc': [], 'precision': [], 'recall': [], 'f1_score': [], 'auc_roc': []}
 
-    sg.cprint("* Model has been created")
+    sg.cprint("* Model has been created", key="-PROGRESS TEXT TRAIN-")
     history = []
     stopped = False
     save = False
@@ -212,12 +215,12 @@ def train_loop(window, models):
         event, values = window.read(0)
 
         if 'PyTorch' in model_name:
-            sg.cprint(f'EPOCH [{epoch}]', end='\n')
+            sg.cprint(f'EPOCH [{epoch}]', end='\n', key="-PROGRESS TEXT TRAIN-")
             history, stopped, save = train_epoch_pt(epoch, model, history, optimizer, train_loader, window,
                                                     grad_clip=0.2)
             filepath = save_scores_plot(history, model_name, n_epochs, epoch)
         if 'TensorFlow' in model_name:
-            sg.cprint(f'EPOCH [{epoch}]', end='')
+            sg.cprint(f'EPOCH [{epoch}]', end='', key="-PROGRESS TEXT TRAIN-")
             history = model.fit(train_generator, steps_per_epoch=len(samples_train) // BS, epochs=1,
                                 callbacks=[StopTrainingOnWindowClose(window)])
             for key in tf_metrics.keys():
@@ -225,19 +228,25 @@ def train_loop(window, models):
 
             filepath = save_scores_plot(tf_metrics, model_name, n_epochs, epoch)
 
+        event, values = window.read(0)
+        if event == "Exit" or event == sg.WIN_CLOSED or event is None:
+            return models, go_menu_b
+
         if stopped:
             if save:
-                sg.cprint("* Training was manually stopped", text_color='blue')
+                sg.cprint("* Training was manually stopped", text_color='blue', key="-PROGRESS TEXT TRAIN-")
                 models[model_name] = model
-                sg.cprint("* Model has been saved")
+                sg.cprint("* Model has been saved", key="-PROGRESS TEXT TRAIN-")
                 window[f'-COL8-'].update(visible=False)
                 window[f'-COL7-'].update(visible=True)
-                return models
+                return models, go_menu_b
             else:
-                sg.cprint("* Training cancelled", text_color='red')
+                sg.cprint("* Training cancelled", text_color='red', key="-PROGRESS TEXT TRAIN-")
                 window[f'-COL8-'].update(visible=False)
                 window[f'-COL7-'].update(visible=True)
-                return models
+                return models, go_menu_b
+        else:
+            pass
 
         try:
             im = Image.open(filepath)
@@ -253,29 +262,32 @@ def train_loop(window, models):
             data = output.getvalue()
         window["-GRAPH-"].update(data=data)
 
-    window["-CANCEL-"].update(text="Go back")
-    window["-SAVE-"].update(text="Save model")
-    window["-MENU-"].update(disabled=False)
+    sg.cprint('* Training finished', key="-PROGRESS TEXT TRAIN-")
+
+    window[f"-CANCEL_B-"].update(text="Go back")
+    window[f"-SAVE-"].update(text="Save model")
+    window[f"-MENU_B-"].update(disabled=False)
 
     while True:
         event, values = window.read(0)
 
         if event == "Exit" or event == sg.WIN_CLOSED:
-            return models
+            return models, go_menu_b
 
-        if event == '-CANCEL-':
+        if event == '-CANCEL_B-':
             window[f'-COL8-'].update(visible=False)
             window[f'-COL7-'].update(visible=True)
-            return models
+            return models, go_menu_b
 
         if event == '-SAVE-':
             models[model_name] = model
-            sg.cprint("* Model has been saved")
+            sg.cprint("* Model has been saved", key="-PROGRESS TEXT TRAIN-")
             window[f'-COL8-'].update(visible=False)
             window[f'-COL7-'].update(visible=True)
-            return models
+            return models, go_menu_b
 
-        if event == '-MENU-':
+        if event == '-MENU_B-':
             window[f'-COL8-'].update(visible=False)
             window[f'-COL7-'].update(visible=True)
-            return models
+            go_menu_b = True
+            return models, go_menu_b

@@ -222,23 +222,23 @@ class ResNetBase(ImageClassificationBase):
         return nn.Sequential(*layers)
 
 
-def ResNet18(img_channels=3, num_classes=1000):
+def ResNet18_pt(img_channels=3, num_classes=1000):
     return ResNetBase(18, Block, img_channels, num_classes)
 
 
-def ResNet34(img_channels=3, num_classes=1000):
+def ResNet34_pt(img_channels=3, num_classes=1000):
     return ResNetBase(34, Block, img_channels, num_classes)
 
 
-def ResNet50(img_channels=3, num_classes=1000):
+def ResNet50_pt(img_channels=3, num_classes=1000):
     return ResNetBase(50, Block, img_channels, num_classes)
 
 
-def ResNet101(img_channels=3, num_classes=1000):
+def ResNet101_pt(img_channels=3, num_classes=1000):
     return ResNetBase(101, Block, img_channels, num_classes)
 
 
-def ResNet152(img_channels=3, num_classes=1000):
+def ResNet152_pt(img_channels=3, num_classes=1000):
     return ResNetBase(152, Block, img_channels, num_classes)
 
 
