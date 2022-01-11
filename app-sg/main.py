@@ -8,8 +8,8 @@ from result_page import result_layout
 from train_settings_page import train_settings_layout, train_settings_loop
 from train_page import train_layout
 from utils import back_event
-from utils_pt_train import *
 import cv2
+import os
 
 
 class HECKApp:
@@ -47,6 +47,13 @@ class HECKApp:
         faceCascade = cv2.CascadeClassifier('faceutils/haarcascade_frontalface_default.xml')
         models = {'res9pt': [], 'res50tf': []}
         predictor = None
+
+        usr_model_path = os.getcwd().replace('\\', '/') + "/user_models"
+        score_plots_path = os.getcwd().replace('\\', '/') + "/score_plots"
+        if not os.path.isdir(usr_model_path):
+            os.makedirs(usr_model_path)
+        if not os.path.isdir(score_plots_path):
+            os.makedirs(score_plots_path)
 
         while True:
             event, values = window.read()

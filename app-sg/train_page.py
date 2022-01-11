@@ -32,6 +32,7 @@ def train_layout():
               ]
     return layout
 
+
 def train_epoch_pt(epoch, model, history, optimizer, train_loader, window, grad_clip=None):
     train_losses = []
     stopped = False
@@ -243,6 +244,12 @@ def train_loop(window, models):
 
         if event == '-SAVE-':
             models[model_name] = model
+            if "PyTorch" in model_name:
+                model_path = os.getcwd() + "/user_models/" + model_name + '.pth'
+                torch.save(model.state_dict(), model_path)
+            elif "TensorFlow" in model_name:
+                model_path = os.getcwd() + "/user_models/" + model_name + '.h5'
+                model.save(model_path)
             sg.cprint("* Model has been saved", key="-PROGRESS TEXT TRAIN-", text_color='green')
             time.sleep(2)
             window[f'-COL8-'].update(visible=False)
@@ -256,6 +263,14 @@ def train_loop(window, models):
                 else:
                     sg.cprint("* Training was manually stopped", text_color='blue', key="-PROGRESS TEXT TRAIN-")
                 models[model_name] = model
+
+                if "PyTorch" in model_name:
+                    model_path = os.getcwd() + "/user_models/" + model_name + '.pth'
+                    torch.save(model.state_dict(), model_path)
+                elif "TensorFlow" in model_name:
+                    model_path = os.getcwd() + "/user_models/" + model_name + '.h5'
+                    model.save(model_path)
+
                 sg.cprint("* Model has been saved", key="-PROGRESS TEXT TRAIN-", text_color='green')
                 time.sleep(2)
                 window[f'-COL8-'].update(visible=False)
@@ -306,6 +321,14 @@ def train_loop(window, models):
 
         if event == '-SAVE-':
             models[model_name] = model
+
+            if "PyTorch" in model_name:
+                model_path = os.getcwd() + "/user_models/" + model_name + '.pth'
+                torch.save(model.state_dict(), model_path)
+            elif "TensorFlow" in model_name:
+                model_path = os.getcwd() + "/user_models/" + model_name + '.h5'
+                model.save(model_path)
+
             sg.cprint("* Model has been saved", key="-PROGRESS TEXT TRAIN-", text_color='green')
             time.sleep(2)
             window[f'-COL8-'].update(visible=False)
