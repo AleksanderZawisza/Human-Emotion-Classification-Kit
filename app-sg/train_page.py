@@ -1,4 +1,5 @@
 import os
+import time
 
 import PySimpleGUI as sg
 import torch.optim
@@ -232,16 +233,31 @@ def train_loop(window, models):
         if event == "Exit" or event == sg.WIN_CLOSED or event is None:
             return models, go_menu_b
 
+        if event == '-CANCEL_B-':
+            window[f'-COL8-'].update(visible=False)
+            window[f'-COL7-'].update(visible=True)
+            return models, go_menu_b
+
+        if event == '-SAVE-':
+            models[model_name] = model
+            sg.cprint("* Model has been saved", key="-PROGRESS TEXT TRAIN-", text_color='green')
+            time.sleep(2)
+            window[f'-COL8-'].update(visible=False)
+            window[f'-COL7-'].update(visible=True)
+            return models, go_menu_b
+
         if stopped:
             if save:
                 sg.cprint("* Training was manually stopped", text_color='blue', key="-PROGRESS TEXT TRAIN-")
                 models[model_name] = model
-                sg.cprint("* Model has been saved", key="-PROGRESS TEXT TRAIN-")
+                sg.cprint("* Model has been saved", key="-PROGRESS TEXT TRAIN-", text_color='green')
+                time.sleep(2)
                 window[f'-COL8-'].update(visible=False)
                 window[f'-COL7-'].update(visible=True)
                 return models, go_menu_b
             else:
                 sg.cprint("* Training cancelled", text_color='red', key="-PROGRESS TEXT TRAIN-")
+                time.sleep(2)
                 window[f'-COL8-'].update(visible=False)
                 window[f'-COL7-'].update(visible=True)
                 return models, go_menu_b
@@ -281,7 +297,8 @@ def train_loop(window, models):
 
         if event == '-SAVE-':
             models[model_name] = model
-            sg.cprint("* Model has been saved", key="-PROGRESS TEXT TRAIN-")
+            sg.cprint("* Model has been saved", key="-PROGRESS TEXT TRAIN-", text_color='green')
+            time.sleep(2)
             window[f'-COL8-'].update(visible=False)
             window[f'-COL7-'].update(visible=True)
             return models, go_menu_b
