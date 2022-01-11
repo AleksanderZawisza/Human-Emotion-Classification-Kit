@@ -203,14 +203,16 @@ def train_loop(window, models):
         if 'PyTorch' in model_name:
             history = train_epoch_pt(epoch, model, history, optimizer, train_loader, window, grad_clip=0.2)
             filepath = save_scores_plot(history, model_name, n_epochs, epoch)
-        if 'ResNet' in model_name:
+        if 'TensorFlow' in model_name:
             sg.cprint(f'EPOCH [{epoch}]', end='')
-            history = model.fit(train_generator, steps_per_epoch=len(samples_train) // BS, epochs=1)
+            history = model.fit(train_generator, steps_per_epoch=len(samples_train) // BS, epochs=1,
+                                callbacks=[StopTrainingOnWindowClose(window)])
             for key in tf_metrics.keys():
                 tf_metrics[key].extend(history.history[key])
 
             filepath = save_scores_plot(tf_metrics, model_name, n_epochs, epoch)
 
+        event, values = window.read(0)
         if event == "Exit" or event == sg.WIN_CLOSED:
             break
 

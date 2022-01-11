@@ -3,7 +3,20 @@ import numpy as np
 import random
 import cv2
 import os
+import PySimpleGUI as sg
 
+class StopTrainingOnWindowClose(tf.keras.callbacks.Callback):
+    """ NewCallback descends from Callback
+    """
+    def __init__(self, window):
+        """ Save params in constructor
+        """
+        self.window = window
+
+    def on_train_batch_end(self, batch, logs=None):
+        event, values = self.window.read(0)
+        if event == "Exit" or event == sg.WIN_CLOSED:
+            self.model.stop_training = True
 
 class F1_Score(tf.keras.metrics.Metric):
 
