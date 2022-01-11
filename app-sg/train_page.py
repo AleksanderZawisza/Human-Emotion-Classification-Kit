@@ -1,3 +1,5 @@
+import os
+
 import PySimpleGUI as sg
 import torch.optim
 import matplotlib.pyplot as plt
@@ -30,7 +32,6 @@ def train_layout():
 
 
 def train_epoch_pt(epoch, model, history, optimizer, train_loader, window, grad_clip=None):
-    model.train()
     train_losses = []
     predss = []
     labelss = []
@@ -145,8 +146,7 @@ def train_loop(window, models):
         else:
             opt_func = torch.optim.SGD
         optimizer = opt_func(model.parameters(), lr, weight_decay=weight_decay)
-
-
+        model.train()
     if 'ResNet' in model_name:
         train_loader, device = make_train_loader_pt(data_dir, 64)
         if model_name == 'TensorFlow_ResNet9':
@@ -179,6 +179,7 @@ def train_loop(window, models):
         tf_metrics = {'loss': [], 'acc': [], 'precision': [], 'recall': [], 'f1_score': [], 'auc_roc': []}
 
 
+    sg.cprint("* Model has been created")
     history = []
     for epoch in range(n_epochs):
         event, values = window.read(0)
