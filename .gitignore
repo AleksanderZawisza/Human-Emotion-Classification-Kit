@@ -8,3 +8,4 @@
 /app-sg/dist/*
 /app-sg/example_images/*
 /app-sg/score_plots/*
+/app-sg/user_models/*

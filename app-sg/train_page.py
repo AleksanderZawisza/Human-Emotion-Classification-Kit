@@ -24,7 +24,8 @@ def train_layout():
                    [sg.Button('Stop & Save', size=(15, 1), font=('Courier New', 12), pad=((10, 10), (90, 20)),
                               key='-SAVE-')],
                    [sg.Button('Cancel & Back', size=(15, 1), font=('Courier New', 12), pad=(10, 20), key='-CANCEL-')],
-                   [sg.Button('Main menu', size=(15, 1), font=('Courier New', 12), pad=(10, 20), key='-MENU-')],
+                   [sg.Button('Main menu', size=(15, 1), font=('Courier New', 12), pad=(10, 20), key='-MENU-',
+                              disabled=True)],
                ],
                         size=(250, 350), border_width=0, pad=(0, 0), element_justification='center')],
               ]
@@ -33,12 +34,30 @@ def train_layout():
 
 def train_epoch_pt(epoch, model, history, optimizer, train_loader, window, grad_clip=None):
     train_losses = []
+    stopped = False
+    save = False
     predss = []
     labelss = []
     i = 1
     n = len(train_loader)
     for batch in train_loader:
         event, values = window.read(0)
+
+        if event == "Exit" or event == sg.WIN_CLOSED or event is None:
+            stopped = True
+            save = False
+            return history, stopped, save
+
+        if event == '-CANCEL-':
+            stopped = True
+            save = False
+            return history, stopped, save
+
+        if event == '-SAVE-':
+            stopped = True
+            save = True
+            return history, stopped, save
+
         data = model.training_step(batch)
         loss = data[0]
         preds = data[1].cpu()
@@ -68,7 +87,7 @@ def train_epoch_pt(epoch, model, history, optimizer, train_loader, window, grad_
     result['train_precision'] = precision_sc(labelss, predss)
     model.epoch_end(epoch, result)
     history.append(result)
-    return history
+    return history, stopped, save
 
 
 def save_scores_plot(history, model_name, n_epochs, epoch):
@@ -80,7 +99,7 @@ def save_scores_plot(history, model_name, n_epochs, epoch):
         train_f1s = [x['train_f1'] for x in history]
         train_auc_rocs = [x['train_auc_roc'] for x in history]
         title = model_name + ' model accuracy'
-    if "ResNet" in model_name:
+    if "TensorFlow" in model_name:
         train_losses = history['loss']
         train_accs = history['acc']
         train_precisions = history['precision']
@@ -117,6 +136,11 @@ def save_scores_plot(history, model_name, n_epochs, epoch):
 
 def train_loop(window, models):
     event, values = window.read(0)
+
+    window["-CANCEL-"].update(text="Cancel & Back")
+    window["-SAVE-"].update(text="Stop & Save")
+    window["-MENU-"].update(disabled=True)
+
     n_epochs = int(values['-EPOCHS-'])
     lr = values['-LR-']
     weight_decay = values['-DECAY-']
@@ -147,8 +171,7 @@ def train_loop(window, models):
             opt_func = torch.optim.SGD
         optimizer = opt_func(model.parameters(), lr, weight_decay=weight_decay)
         model.train()
-    if 'ResNet' in model_name:
-        train_loader, device = make_train_loader_pt(data_dir, 64)
+    if 'TensorFlow' in model_name:
         if model_name == 'TensorFlow_ResNet9':
             model = EmotionsRN9()
         elif model_name == 'TensorFlow_ResNet18':
@@ -168,40 +191,30 @@ def train_loop(window, models):
             optimizer = tf.keras.optimizers.SGD(lr=lr, momentum=0.9, decay=weight_decay, nesterov=True)
 
         model.compile(optimizer=optimizer, loss='categorical_crossentropy', metrics=['accuracy',
-                                                                             tf.keras.metrics.Precision(name='precision'),
-                                                                             tf.keras.metrics.Recall(name='recall'),
-                                                                             F1_Score(name='f1_score'),
-                                                                             tf.keras.metrics.AUC(name='auc_roc')])
+                                                                                     tf.keras.metrics.Precision(
+                                                                                         name='precision'),
+                                                                                     tf.keras.metrics.Recall(
+                                                                                         name='recall'),
+                                                                                     F1_Score(name='f1_score'),
+                                                                                     tf.keras.metrics.AUC(
+                                                                                         name='auc_roc')])
         BS = 16
         train_generator = image_generator(data_dir, True, BS=BS)
         samples_train = load_filenames(data_dir)
         # train_generator = generator(samples_train, True, batch_size=BS,  window=window)
         tf_metrics = {'loss': [], 'acc': [], 'precision': [], 'recall': [], 'f1_score': [], 'auc_roc': []}
 
-
     sg.cprint("* Model has been created")
     history = []
+    stopped = False
+    save = False
     for epoch in range(n_epochs):
         event, values = window.read(0)
-        if event == "Exit" or event == sg.WIN_CLOSED or event is None:
-            break
-
-        if '-CANCEL-' in event:
-            sg.cprint("* Training cancelled", text_color='red')
-            window[f'-COL8-'].update(visible=False)
-            window[f'-COL7-'].update(visible=True)
-            return models
-
-        if '-SAVE-' in event:
-            sg.cprint("* Training was manually stopped", text_color='red')
-            sg.cprint("* Model has been saved")
-            models[model_name] = model
-            window[f'-COL8-'].update(visible=False)
-            window[f'-COL7-'].update(visible=True)
-            return models
 
         if 'PyTorch' in model_name:
-            history = train_epoch_pt(epoch, model, history, optimizer, train_loader, window, grad_clip=0.2)
+            sg.cprint(f'EPOCH [{epoch}]', end='\n')
+            history, stopped, save = train_epoch_pt(epoch, model, history, optimizer, train_loader, window,
+                                                    grad_clip=0.2)
             filepath = save_scores_plot(history, model_name, n_epochs, epoch)
         if 'TensorFlow' in model_name:
             sg.cprint(f'EPOCH [{epoch}]', end='')
@@ -212,9 +225,19 @@ def train_loop(window, models):
 
             filepath = save_scores_plot(tf_metrics, model_name, n_epochs, epoch)
 
-        event, values = window.read(0)
-        if event == "Exit" or event == sg.WIN_CLOSED:
-            break
+        if stopped:
+            if save:
+                sg.cprint("* Training was manually stopped", text_color='blue')
+                models[model_name] = model
+                sg.cprint("* Model has been saved")
+                window[f'-COL8-'].update(visible=False)
+                window[f'-COL7-'].update(visible=True)
+                return models
+            else:
+                sg.cprint("* Training cancelled", text_color='red')
+                window[f'-COL8-'].update(visible=False)
+                window[f'-COL7-'].update(visible=True)
+                return models
 
         try:
             im = Image.open(filepath)
@@ -238,7 +261,7 @@ def train_loop(window, models):
         event, values = window.read(0)
 
         if event == "Exit" or event == sg.WIN_CLOSED:
-            break
+            return models
 
         if event == '-CANCEL-':
             window[f'-COL8-'].update(visible=False)
@@ -248,6 +271,11 @@ def train_loop(window, models):
         if event == '-SAVE-':
             models[model_name] = model
             sg.cprint("* Model has been saved")
+            window[f'-COL8-'].update(visible=False)
+            window[f'-COL7-'].update(visible=True)
+            return models
+
+        if event == '-MENU-':
             window[f'-COL8-'].update(visible=False)
             window[f'-COL7-'].update(visible=True)
             return models
