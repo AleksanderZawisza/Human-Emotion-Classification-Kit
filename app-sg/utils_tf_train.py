@@ -170,7 +170,7 @@ def rotate_image(image, deg):
     return image
 
 
-def generator(samples, aug=False, batch_size=32, shuffle_data=True, resize=197):
+def generator(samples, aug=False, batch_size=32, shuffle_data=True, resize=197, window=None):
     """
     Yields the next training batch.
     Suppose `samples` is an array [[image1_filename,label1], [image2_filename,label2],...].
@@ -215,11 +215,15 @@ def generator(samples, aug=False, batch_size=32, shuffle_data=True, resize=197):
             # X2 = np.array(X2)
             y = np.array(y)
 
+            if window:
+                print('', end='')
+                window.refresh()
+
             # The generator-y part: yield the next training batch
             # yield [X1, X2], y
             yield X1, y
 
-def image_generator(dataset, aug=False, BS=32):
+def image_generator(dataset, aug=False, BS=32, get_datagen=False):
     if aug:
         datagen = tf.keras.preprocessing.image.ImageDataGenerator(
                             rescale=1./255,
@@ -233,6 +237,8 @@ def image_generator(dataset, aug=False, BS=32):
     else:
         datagen = tf.keras.preprocessing.image.ImageDataGenerator.ImageDataGenerator(rescale=1./255)
 
+    if get_datagen:
+        return datagen
     return datagen.flow_from_directory(
             dataset,
             target_size=(197, 197),
@@ -282,15 +288,16 @@ if __name__ == "__main__":
 
     metrics = {'loss': [], 'acc': [], 'precision': [], 'recall': [], 'f1_score': [], 'auc_roc': []}
 
-    for ep in range(EPOCHS):
-        history = rn9.fit_generator(
-            generator=train_generator,
-            # validation_data=dev_generator,
-            steps_per_epoch=len(samples_train) // BS //100,
-            # validation_steps=len(samples_dev) // BS,
-            epochs=1,
-            # use_multiprocessing=True
-        )
-        for key in metrics.keys():
-            metrics[key].extend(history.history[key])
-        print(metrics)
+
+    # for ep in range(EPOCHS):
+    #     history = rn9.fit_generator(
+    #         generator=train_generator,
+    #         # validation_data=dev_generator,
+    #         steps_per_epoch=len(samples_train) // BS //100,
+    #         # validation_steps=len(samples_dev) // BS,
+    #         epochs=1,
+    #         # use_multiprocessing=True
+    #     )
+    #     for key in metrics.keys():
+    #         metrics[key].extend(history.history[key])
+    #     print(metrics)

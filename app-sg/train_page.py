@@ -1,5 +1,3 @@
-import os
-
 import PySimpleGUI as sg
 import torch.optim
 import matplotlib.pyplot as plt
@@ -8,13 +6,14 @@ from PIL import Image
 from io import BytesIO
 
 from utils_pt_train import *
+from utils_tf_train import *
 
 
 def train_layout():
     layout = [[sg.Column([[sg.Text('Training in progress', font=('Courier New', 20))],
                           [sg.HSep(pad=((0, 0), (0, 0)))]])],
               [sg.Multiline(key='-PROGRESS TEXT-', font=('Courier New', 10), size=(90, 8), enable_events=False,
-                            pad=(0, 20), reroute_stdout=True,
+                            pad=(0, 20), reroute_stdout=True, auto_refresh=True,
                             write_only=True, reroute_cprint=True, disabled=True)],
               [sg.Frame('Training scores:', [[sg.Image(key="-GRAPH-")]],
                         size=(550, 350), border_width=0, pad=(0, 0),
@@ -80,8 +79,14 @@ def save_scores_plot(history, model_name, n_epochs, epoch):
         train_f1s = [x['train_f1'] for x in history]
         train_auc_rocs = [x['train_auc_roc'] for x in history]
         title = model_name + ' model accuracy'
-    else:
-        pass
+    if "ResNet" in model_name:
+        train_losses = history['loss']
+        train_accs = history['acc']
+        train_precisions = history['precision']
+        train_recalls = history['recall']
+        train_f1s = history['f1_score']
+        train_auc_rocs = history['auc_roc']
+        title = model_name + ' model accuracy'
 
     fig, ax1 = plt.subplots()
 
@@ -140,8 +145,39 @@ def train_loop(window, models):
         else:
             opt_func = torch.optim.SGD
         optimizer = opt_func(model.parameters(), lr, weight_decay=weight_decay)
-    else:
-        pass
+
+
+    if 'ResNet' in model_name:
+        train_loader, device = make_train_loader_pt(data_dir, 64)
+        if model_name == 'TensorFlow_ResNet9':
+            model = EmotionsRN9()
+        elif model_name == 'TensorFlow_ResNet18':
+            model = EmotionsRN18()
+        elif model_name == 'TensorFlow_ResNet34':
+            model = EmotionsRN34()
+        elif model_name == 'TensorFlow_ResNet50':
+            model = tf.keras.applications.ResNet50(weights=None, classes=7)
+        elif model_name == 'TensorFlow_ResNet101':
+            model = tf.keras.applications.ResNet101(weights=None, classes=7)
+        else:
+            model = tf.keras.applications.ResNet152(weights=None, classes=7)
+
+        if isAdam:
+            optimizer = tf.keras.optimizers.Adam(lr=lr, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=weight_decay)
+        else:
+            optimizer = tf.keras.optimizers.SGD(lr=lr, momentum=0.9, decay=weight_decay, nesterov=True)
+
+        model.compile(optimizer=optimizer, loss='categorical_crossentropy', metrics=['accuracy',
+                                                                             tf.keras.metrics.Precision(name='precision'),
+                                                                             tf.keras.metrics.Recall(name='recall'),
+                                                                             F1_Score(name='f1_score'),
+                                                                             tf.keras.metrics.AUC(name='auc_roc')])
+        BS = 16
+        train_generator = image_generator(data_dir, True, BS=BS)
+        samples_train = load_filenames(data_dir)
+        # train_generator = generator(samples_train, True, batch_size=BS,  window=window)
+        tf_metrics = {'loss': [], 'acc': [], 'precision': [], 'recall': [], 'f1_score': [], 'auc_roc': []}
+
 
     history = []
     for epoch in range(n_epochs):
@@ -165,10 +201,18 @@ def train_loop(window, models):
 
         if 'PyTorch' in model_name:
             history = train_epoch_pt(epoch, model, history, optimizer, train_loader, window, grad_clip=0.2)
-        else:
-            pass
+            filepath = save_scores_plot(history, model_name, n_epochs, epoch)
+        if 'ResNet' in model_name:
+            sg.cprint(f'EPOCH [{epoch}]', end='')
+            history = model.fit(train_generator, steps_per_epoch=len(samples_train) // BS, epochs=1)
+            for key in tf_metrics.keys():
+                tf_metrics[key].extend(history.history[key])
 
-        filepath = save_scores_plot(history, model_name, n_epochs, epoch)
+            filepath = save_scores_plot(tf_metrics, model_name, n_epochs, epoch)
+
+        if event == "Exit" or event == sg.WIN_CLOSED:
+            break
+
         try:
             im = Image.open(filepath)
         except:
