@@ -8,7 +8,7 @@ import torchvision.transforms as tt
 from torchvision.datasets import ImageFolder
 from torch.utils.data import DataLoader
 
-from sklearn.metrics import precision_score, f1_score, recall_score, roc_auc_score, accuracy_score
+from sklearn.metrics import roc_auc_score, classification_report
 from sklearn.preprocessing import OneHotEncoder
 
 
@@ -17,28 +17,22 @@ from sklearn.preprocessing import OneHotEncoder
 #     return torch.tensor(torch.sum(preds == labels).item() / len(preds))
 
 
-def acc_sc(labels, preds):
-    return accuracy_score(labels, preds)
-
-
-def f1_sc(labels, preds):
-    return f1_score(labels, preds, average='weighted')
-
-
-def recall_sc(labels, preds):
-    return recall_score(labels, preds, average='weighted')
-
-
 def auc_roc_sc(labels, preds):
     enc = OneHotEncoder(sparse=False)
     enc.fit([[0], [1], [2], [3], [4], [5], [6]])
     one_hot_true = enc.transform(np.array(labels).reshape(-1, 1))
     one_hot_pred = enc.transform(np.array(preds).reshape(-1, 1))
     return roc_auc_score(one_hot_true, one_hot_pred, average='weighted')
+    # return auroc(preds, labels)
 
 
-def precision_sc(labels, preds):
-    return precision_score(labels, preds, average='weighted')
+def all_scores(labels, preds):
+    report = classification_report(labels, preds, digits=3, output_dict=True)
+    acc_sc = report['accuracy']
+    f1_sc = report['macro avg']['f1-score']
+    recall_sc = report['macro avg']['recall']
+    precision_sc = report['macro avg']['precision']
+    return acc_sc, f1_sc, recall_sc, precision_sc
 
 
 # model utils
@@ -65,6 +59,12 @@ class ImageClassificationBase(nn.Module):
     #     loss = F.cross_entropy(out, labels)
     #     acc = accuracy(labels, out)
     #     return {'val_loss': loss.detach(), 'val_acc': acc}
+
+    def test_func(self, batch):
+        images, labels = batch
+        out = self(images)
+        return out, labels
+
 
     def validation_epoch_end(self, outputs):
         batch_losses = [x['val_loss'] for x in outputs]

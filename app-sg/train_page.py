@@ -44,27 +44,27 @@ def train_epoch_pt(epoch, model, history, optimizer, train_loader, window, grad_
     i = 1
     n = len(train_loader)
     for batch in train_loader:
-        event, values = window.read(0)
-
-        if event == "Exit" or event == sg.WIN_CLOSED or event is None:
-            stopped = True
-            save = False
-            return history, stopped, save
-
-        if event == '-CANCEL_B-':
-            stopped = True
-            save = False
-            return history, stopped, save
-
-        if event == '-SAVE-':
-            stopped = True
-            save = True
-            return history, stopped, save
+        # event, values = window.read(0)
+        #
+        # if event == "Exit" or event == sg.WIN_CLOSED or event is None:
+        #     stopped = True
+        #     save = False
+        #     return history, stopped, save
+        #
+        # if event == '-CANCEL_B-':
+        #     stopped = True
+        #     save = False
+        #     return history, stopped, save
+        #
+        # if event == '-SAVE-':
+        #     stopped = True
+        #     save = True
+        #     return history, stopped, save
 
         data = model.training_step(batch)
         loss = data[0]
-        preds = data[1].cpu()
-        labels = data[2].cpu()
+        preds = data[1].cpu().numpy()
+        labels = data[2].cpu().numpy()
         acc = sum(preds == labels) / len(preds)
         sg.cprint("Batch {}/{} BATCH ACC: {:.2f}".format(i, n, acc), key="-PROGRESS TEXT TRAIN-")
         i += 1
@@ -81,20 +81,26 @@ def train_epoch_pt(epoch, model, history, optimizer, train_loader, window, grad_
         optimizer.zero_grad()
 
     # Validation phase
+    print("Preds len " + str(len(predss)))
+    print("Labels len " + str(len(labelss)))
     result = {}
     result['train_loss'] = torch.stack(train_losses).mean().item()
-    result['train_acc'] = acc_sc(labelss, predss)
-    result['train_f1'] = f1_sc(labelss, predss)
-    result['train_recall'] = recall_sc(labelss, predss)
+    acc_sc, f1_sc, recall_sc, precision_sc = all_scores(labelss, predss)
+    result['train_acc'] = acc_sc
+    print("acc " + str(result['train_acc']))
+    result['train_f1'] = f1_sc
+    print("train_f1 " + str(result['train_f1']))
+    result['train_recall'] = recall_sc
+    print("train_recall " + str(result['train_recall']))
     result['train_auc_roc'] = auc_roc_sc(labelss, predss)
-    result['train_precision'] = precision_sc(labelss, predss)
+    print("train_auc_roc " + str(result['train_auc_roc']))
+    result['train_precision'] = precision_sc
     model.epoch_end(epoch, result)
     history.append(result)
     return history, stopped, save
 
 
 def save_scores_plot(history, model_name, n_epochs, epoch, model_savename, is_last=False):
-
     title = f"{model_savename} ({model_name}) model accuracy"
 
     if "PyTorch" in model_name:
@@ -267,7 +273,7 @@ def train_loop(window, models):
             models[model_name] = model
             if "PyTorch" in model_name:
                 temp = save_scores_plot(history, model_name, n_epochs, epoch, model_savename, True)
-                model_path = os.getcwd() + "/user_models/" + model_savename + '_('+ model_name +')' + '.pth'
+                model_path = os.getcwd() + "/user_models/" + model_savename + '_(' + model_name + ')' + '.pth'
                 torch.save(model.state_dict(), model_path)
                 try:
                     del model
@@ -277,7 +283,7 @@ def train_loop(window, models):
                     pass
             elif "TensorFlow" in model_name:
                 temp = save_scores_plot(tf_metrics, model_name, n_epochs, epoch, model_savename, True)
-                model_path = os.getcwd() + "/user_models/" + model_savename + '_('+ model_name +')' + '.h5'
+                model_path = os.getcwd() + "/user_models/" + model_savename + '_(' + model_name + ')' + '.h5'
                 model.save_weights(model_path)
                 try:
                     del model
@@ -300,7 +306,7 @@ def train_loop(window, models):
                 models[model_name] = model
                 if "PyTorch" in model_name:
                     temp = save_scores_plot(history, model_name, n_epochs, epoch, model_savename, True)
-                    model_path = os.getcwd() + "/user_models/" + model_savename + '_('+ model_name +')' + '.pth'
+                    model_path = os.getcwd() + "/user_models/" + model_savename + '_(' + model_name + ')' + '.pth'
                     torch.save(model.state_dict(), model_path)
                     try:
                         del model
@@ -310,7 +316,7 @@ def train_loop(window, models):
                         pass
                 elif "TensorFlow" in model_name:
                     temp = save_scores_plot(tf_metrics, model_name, n_epochs, epoch, model_savename, True)
-                    model_path = os.getcwd() + "/user_models/" + model_savename + '_('+ model_name +')' + '.h5'
+                    model_path = os.getcwd() + "/user_models/" + model_savename + '_(' + model_name + ')' + '.h5'
                     model.save_weights(model_path)
                     try:
                         del model
@@ -405,7 +411,7 @@ def train_loop(window, models):
             models[model_name] = model
             if "PyTorch" in model_name:
                 temp = save_scores_plot(history, model_name, n_epochs, epoch, model_savename, True)
-                model_path = os.getcwd() + "/user_models/" + model_savename + '_('+ model_name +')' + '.pth'
+                model_path = os.getcwd() + "/user_models/" + model_savename + '_(' + model_name + ')' + '.pth'
                 torch.save(model.state_dict(), model_path)
                 try:
                     del model
@@ -415,7 +421,7 @@ def train_loop(window, models):
                     pass
             elif "TensorFlow" in model_name:
                 temp = save_scores_plot(tf_metrics, model_name, n_epochs, epoch, model_savename, True)
-                model_path = os.getcwd() + "/user_models/" + model_savename + '_('+ model_name +')' + '.h5'
+                model_path = os.getcwd() + "/user_models/" + model_savename + '_(' + model_name + ')' + '.h5'
                 model.save_weights(model_path)
                 try:
                     del model
@@ -449,3 +455,32 @@ def train_loop(window, models):
             window[f'-COL7-'].update(visible=True)
             go_menu_b = True
             return models, go_menu_b
+
+
+if __name__ == "__main__":
+    train_loader, device = make_train_loader_pt("C:/Users/Aleksander Podsiad/Desktop/Projekt Emocje/Dane/test", 64)
+    # model = to_device(ResNet(1, 7), device)
+    model = torch.load(
+        'C:/Users/Aleksander Podsiad/Desktop/Human-Emotion-Classification-Kit/app-sg/models/ResNet1_mdl_EPOCHS_40.pth')
+    model = to_device(model, device)
+    # opt_func = torch.optim.Adam
+    # model.train()
+    # history = []
+    # lr = 0
+    # weight_decay = 0
+    # optimizer = opt_func(model.parameters(), lr, weight_decay=weight_decay)
+    # history, stopped, save = train_epoch_pt(1, model, history, optimizer, train_loader, None,
+    #                                         grad_clip=0.2)
+    # print(history)
+
+    # model.eval()
+    # preds = []
+    # labels = []
+    # for batch in train_loader:
+    #     pred, label = model.test_func(batch)
+    #     preds.extend(pred.cpu())
+    #     labels.extend(label.cpu())
+    # labels = [x.item() for x in labels]
+    # preds = [x.item() for x in preds]
+    # print(accuracy_score(labels, preds))
+    # print(recall_sc(labels, preds))
