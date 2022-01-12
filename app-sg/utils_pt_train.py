@@ -75,7 +75,7 @@ class ImageClassificationBase(nn.Module):
 
     def epoch_end(self, epoch, result):
         print("Epoch [{}], train_loss: {:.3f}, train_acc: {:.3f}".format(
-            epoch, result['train_loss'], result['train_acc'] * 100))
+            epoch, result['train_loss'], result['train_acc']))
 
 
 class ResNet(ImageClassificationBase):  # ResNet9
