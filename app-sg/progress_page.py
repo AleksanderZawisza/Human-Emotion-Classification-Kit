@@ -1,5 +1,6 @@
 import os.path
 
+import traceback
 import PySimpleGUI as sg
 from utils import list_all_pictures, load_res9pt, load_res50tf, prediction_combo, load_custom_model
 from result_page import result_loop
@@ -65,7 +66,10 @@ def progress_loop(window, chosen_stuff, values, faceCascade, models, predictor):
         models['res50tf'] = load_res50tf()
     elif model_text not in models:
         sg.cprint('Loading model...', key="-PROGRESS TEXT-")
-        models[model_text] = load_custom_model(model_text)
+        if '(TensorFlow' in model_text: ext = '.h5'
+        elif '(PyTorch' in model_text: ext = '.pth'
+        model_filename = model_text + ext
+        models[model_text] = load_custom_model(model_filename)
     else:
         sg.cprint('* Model already loaded', key="-PROGRESS TEXT-")
     if not predictor:
@@ -113,7 +117,7 @@ def progress_loop(window, chosen_stuff, values, faceCascade, models, predictor):
 
             for image_path in pics_in_folder:
                 try:
-                    if res9pt or "PyTorch" in model_text:
+                    if res9pt or "(PyTorch" in model_text:
                         if res9pt:
                             model_name = 'res9pt'
                         else:
@@ -126,7 +130,7 @@ def progress_loop(window, chosen_stuff, values, faceCascade, models, predictor):
                         result_dict.update(result_tmp)
                         change_dict.update(change_tmp)
 
-                    elif res50tf or "TensorFlow" in model_text:
+                    elif res50tf or "(TensorFlow" in model_text:
                         if res50tf:
                             model_name = 'res50tf'
                         else:
@@ -146,12 +150,13 @@ def progress_loop(window, chosen_stuff, values, faceCascade, models, predictor):
                 except Exception:
                     sg.cprint('* ERROR PROCESSING: \'' + image_path + '\', IMAGE SKIPPED', text_color='red',
                               key="-PROGRESS TEXT-")
+                    traceback.print_exc()
                     i += 1
                     window['-PROGRESS BAR-'].update(i, steps)
 
         else:
             try:
-                if res9pt or "PyTorch" in model_text:
+                if res9pt or "(PyTorch" in model_text:
                     if res9pt:
                         model_name = 'res9pt'
                     else:
@@ -164,7 +169,7 @@ def progress_loop(window, chosen_stuff, values, faceCascade, models, predictor):
                     result_dict.update(result_tmp)
                     change_dict.update(change_tmp)
 
-                elif res50tf or "TensorFlow" in model_text:
+                elif res50tf or "(TensorFlow" in model_text:
                     if res50tf:
                         model_name = 'res50tf'
                     else:

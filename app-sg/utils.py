@@ -9,6 +9,9 @@ import numpy as np
 from PIL import Image, ImageFont, ImageDraw
 import dlib
 from keras.models import load_model
+from utils_tf_train import EmotionsRN9, EmotionsRN18, EmotionsRN34
+from tensorflow.keras.applications import ResNet50
+from utils_pt_train import ResNet, ResNet18_pt, ResNet34_pt, ResNet50_pt
 
 
 def back_event(window):
@@ -147,7 +150,7 @@ def prediction_combo(img_path, save_dir, model, model_text, detection, faceCasca
         for i, (x, y, w, h) in enumerate(faces):
             img_tmp = img[y:y + h, x:x + w]
 
-            if model_text == '-RESNET9-' or "PyTorch" in model_text:
+            if model_text == '-RESNET9-' or "(PyTorch" in model_text:
                 out = predict_res9pt(img_tmp, model)
             else:
                 out = predict_res50tf(img_tmp, model, predictor)
@@ -159,10 +162,12 @@ def prediction_combo(img_path, save_dir, model, model_text, detection, faceCasca
             preds.append(out)
 
     if not detection or len(faces) == 0:
-        if model_text == '-RESNET9-' or "PyTorch" in model_text:
+        if model_text == '-RESNET9-' or "(PyTorch" in model_text:
             out = predict_res9pt(img, model)
-        else:
+        elif model_text == '-RESNET50-':
             out = predict_res50tf(img, model, predictor)
+        elif "(TensorFlow" in model_text:
+            out = predict_restf(img, model)
 
         bottomLeftCornerOfText = (0, img.shape[0])
         img = write_emotions_on_img(img, out, bottomLeftCornerOfText, img.shape[1])
@@ -203,12 +208,32 @@ def load_res50tf():
     return load_model(model_path)
 
 
-def load_custom_model(model_text):
-    model_path = "user_models/" + model_text
-    if "PyTorch" in model_text:
-        return torch.load(model_path)
-    else:
-        return load_model(model_path)
+def load_custom_model(model_file):
+    model_path = "user_models/" + model_file
+    if model_file.endswith('.pth'):
+        cwd = os.getcwd().replace('\\', '/')
+        model_path = f"{cwd}/{model_path}"
+        if 'ResNet9)' in model_file:
+            model = ResNet(1, 7)
+        if 'ResNet18)' in model_file:
+            model = ResNet18_pt(1, 7)
+        if 'ResNet34)' in model_file:
+            model = ResNet34_pt(1, 7)
+        if 'ResNet50)' in model_file:
+            model = ResNet50_pt(1, 7)
+        model.load_state_dict(torch.load(model_path))
+        return model
+    elif model_file.endswith('.h5'):
+        if 'ResNet9)' in model_file:
+            model = EmotionsRN9()
+        if 'ResNet18)' in model_file:
+            model = EmotionsRN18()
+        if 'ResNet34)' in model_file:
+            model = EmotionsRN34()
+        if 'ResNet50)' in model_file:
+            model = ResNet50(weights=None, classes=7, input_shape=(197, 197, 3))
+        model.load_weights(model_path)
+        return model
 
 
 def predict_res9pt(img, model):
@@ -253,6 +278,23 @@ def predict_res50tf(img, model, predictor):
     Y_pred = Y_pred * 100  # procenty
     return Y_pred.tolist()  # normalna pythonowa lista
 
+def predict_restf(img, model):
+    X1 = []
+    resize = 197
+
+    # img = cv2.imread(image_path)
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    img = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
+    img = cv2.resize(img, (resize, resize))
+    img = img / 255
+
+    X1.append(img)
+    X1 = np.array(X1)
+    X = [X1]
+    Y_pred = model.predict(X)[0]
+    Y_pred = Y_pred * 100  # procenty
+    return Y_pred.tolist()  # normalna pythonowa lista
+
 
 if __name__ == "__main__":
     emotions_dict = {"anger": 0, "disgust": 1, "fear": 2, "happiness": 3, "neutrality": 4, "sadness": 5, "surprise": 6}
@@ -263,8 +305,11 @@ if __name__ == "__main__":
     # model = load_res50tf()
     # end = start - time.time()
     # pred = predict_res50tf(img, model, predictor)
-    model = load_res9pt()
-    pred = predict_res9pt(img, model)
+    # model = load_res9pt()
+
+    model = EmotionsRN9()
+    model.load_weights("user_models/testmodel1_(TensorFlow_ResNet9).h5")
+    pred = predict_restf(img, model)
     img = write_emotions_on_img(img, pred, (0, img.shape[0]), img.shape[1])
     cv2.imwrite('test.png', img)
 # print(pred)

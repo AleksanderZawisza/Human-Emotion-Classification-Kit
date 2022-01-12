@@ -155,10 +155,10 @@ def train_settings_loop(window, models):
                 window['Train'].update(disabled=False)
 
         if event == "-MODEL SAVE NAME-":
-            chars = set(' /<>"\\\\|?*')
+            chars = set(' /<>"\\\\|?*()')
             name = values["-MODEL SAVE NAME-"]
             if any((c in chars) for c in name):
-                sg.PopupError(f'Forbidden characters in name: /<>"\\|?*', title='ERROR')
+                sg.PopupError(f'Forbidden characters in name: /<>"\\|?*()', title='ERROR')
                 for c in chars:
                     name = name.replace(c, '')
                 window["-MODEL SAVE NAME-"].update(name)

@@ -65,7 +65,7 @@ def train_epoch_pt(epoch, model, history, optimizer, train_loader, window, grad_
         loss = data[0]
         preds = data[1].cpu()
         labels = data[2].cpu()
-        acc = sum(preds == labels) / len(preds) * 100
+        acc = sum(preds == labels) / len(preds)
         sg.cprint("Batch {}/{} BATCH ACC: {:.2f}".format(i, n, acc), key="-PROGRESS TEXT TRAIN-")
         i += 1
         predss.extend(preds)
@@ -93,7 +93,10 @@ def train_epoch_pt(epoch, model, history, optimizer, train_loader, window, grad_
     return history, stopped, save
 
 
-def save_scores_plot(history, model_name, n_epochs, epoch, is_last=False):
+def save_scores_plot(history, model_name, n_epochs, epoch, model_savename, is_last=False):
+
+    title = f"{model_savename} ({model_name}) model accuracy"
+
     if "PyTorch" in model_name:
         train_losses = [x['train_loss'] for x in history]
         train_accs = [x['train_acc'] for x in history]
@@ -101,7 +104,6 @@ def save_scores_plot(history, model_name, n_epochs, epoch, is_last=False):
         train_recalls = [x['train_recall'] for x in history]
         train_f1s = [x['train_f1'] for x in history]
         train_auc_rocs = [x['train_auc_roc'] for x in history]
-        title = model_name + ' model accuracy'
     if "TensorFlow" in model_name:
         train_losses = history['loss']
         train_accs = history['acc']
@@ -109,7 +111,6 @@ def save_scores_plot(history, model_name, n_epochs, epoch, is_last=False):
         train_recalls = history['recall']
         train_f1s = history['f1_score']
         train_auc_rocs = history['auc_roc']
-        title = model_name + ' model accuracy'
 
     fig, ax1 = plt.subplots()
 
@@ -131,7 +132,7 @@ def save_scores_plot(history, model_name, n_epochs, epoch, is_last=False):
     plt.xlabel('epoch')
     plt.xlim([0, n_epochs - 1])
     plt.legend(['accuracy', 'precision', 'recall', 'f1_score', 'auc_roc'], loc='upper left')
-    file_name = model_name + '_epoch_' + str(epoch) + '.png'
+    file_name = model_savename + '_(' + model_name + ').png'
     if is_last:
         file_path = os.getcwd() + '/model_scores/' + file_name
     else:
@@ -155,6 +156,7 @@ def train_loop(window, models):
     weight_decay = values['-DECAY-']
     isAdam = values['-ADAM-']
     model_name = values['-TRAIN DROPDOWN-']
+    model_savename = values["-MODEL SAVE NAME-"]
     data_dir = values['-TRAIN FOLDER-']
 
     sg.cprint("* Training has started", key="-PROGRESS TEXT TRAIN-")
@@ -225,7 +227,7 @@ def train_loop(window, models):
             sg.cprint(f'EPOCH [{epoch}]', end='\n', key="-PROGRESS TEXT TRAIN-")
             history, stopped, save = train_epoch_pt(epoch, model, history, optimizer, train_loader, window,
                                                     grad_clip=0.2)
-            filepath = save_scores_plot(history, model_name, n_epochs, epoch, False)
+            filepath = save_scores_plot(history, model_name, n_epochs, epoch, model_savename, False)
         if 'TensorFlow' in model_name:
             sg.cprint(f'EPOCH [{epoch}]', end='', key="-PROGRESS TEXT TRAIN-")
             callback = StopTrainingOnWindowCloseAndPause(window, tf_flags)
@@ -236,7 +238,7 @@ def train_loop(window, models):
             for key in tf_metrics.keys():
                 tf_metrics[key].extend(history.history[key])
 
-            filepath = save_scores_plot(tf_metrics, model_name, n_epochs, epoch, False)
+            filepath = save_scores_plot(tf_metrics, model_name, n_epochs, epoch, model_savename, False)
 
         event, values = window.read(0)
         if event == "Exit" or event == sg.WIN_CLOSED or event is None:
@@ -264,8 +266,8 @@ def train_loop(window, models):
         if event == '-SAVE-':
             models[model_name] = model
             if "PyTorch" in model_name:
-                temp = save_scores_plot(history, model_name, n_epochs, epoch, True)
-                model_path = os.getcwd() + "/user_models/" + model_name + '.pth'
+                temp = save_scores_plot(history, model_name, n_epochs, epoch, model_savename, True)
+                model_path = os.getcwd() + "/user_models/" + model_savename + '_('+ model_name +')' + '.pth'
                 torch.save(model.state_dict(), model_path)
                 try:
                     del model
@@ -274,9 +276,9 @@ def train_loop(window, models):
                 except:
                     pass
             elif "TensorFlow" in model_name:
-                temp = save_scores_plot(tf_metrics, model_name, n_epochs, epoch, True)
-                model_path = os.getcwd() + "/user_models/" + model_name + '.h5'
-                model.save(model_path)
+                temp = save_scores_plot(tf_metrics, model_name, n_epochs, epoch, model_savename, True)
+                model_path = os.getcwd() + "/user_models/" + model_savename + '_('+ model_name +')' + '.h5'
+                model.save_weights(model_path)
                 try:
                     del model
                     del train_generator
@@ -297,8 +299,8 @@ def train_loop(window, models):
                     sg.cprint("* Training was manually stopped", text_color='blue', key="-PROGRESS TEXT TRAIN-")
                 models[model_name] = model
                 if "PyTorch" in model_name:
-                    temp = save_scores_plot(history, model_name, n_epochs, epoch, True)
-                    model_path = os.getcwd() + "/user_models/" + model_name + '.pth'
+                    temp = save_scores_plot(history, model_name, n_epochs, epoch, model_savename, True)
+                    model_path = os.getcwd() + "/user_models/" + model_savename + '_('+ model_name +')' + '.pth'
                     torch.save(model.state_dict(), model_path)
                     try:
                         del model
@@ -307,9 +309,9 @@ def train_loop(window, models):
                     except:
                         pass
                 elif "TensorFlow" in model_name:
-                    temp = save_scores_plot(tf_metrics, model_name, n_epochs, epoch, True)
-                    model_path = os.getcwd() + "/user_models/" + model_name + '.h5'
-                    model.save(model_path)
+                    temp = save_scores_plot(tf_metrics, model_name, n_epochs, epoch, model_savename, True)
+                    model_path = os.getcwd() + "/user_models/" + model_savename + '_('+ model_name +')' + '.h5'
+                    model.save_weights(model_path)
                     try:
                         del model
                         del train_generator
@@ -358,6 +360,7 @@ def train_loop(window, models):
         with BytesIO() as output:
             im.save(output, format="PNG")
             data = output.getvalue()
+        plt.close('all')
         window["-GRAPH-"].update(data=data)
         try:
             path = os.getcwd() + "/score_plots"
@@ -402,7 +405,7 @@ def train_loop(window, models):
             models[model_name] = model
             if "PyTorch" in model_name:
                 temp = save_scores_plot(history, model_name, n_epochs, epoch, True)
-                model_path = os.getcwd() + "/user_models/" + model_name + '.pth'
+                model_path = os.getcwd() + "/user_models/" + model_savename + '_('+ model_name +')' + '.pth'
                 torch.save(model.state_dict(), model_path)
                 try:
                     del model
@@ -412,8 +415,8 @@ def train_loop(window, models):
                     pass
             elif "TensorFlow" in model_name:
                 temp = save_scores_plot(tf_metrics, model_name, n_epochs, epoch, True)
-                model_path = os.getcwd() + "/user_models/" + model_name + '.h5'
-                model.save(model_path)
+                model_path = os.getcwd() + "/user_models/" + model_savename + '_('+ model_name +')' + '.h5'
+                model.save_weights(model_path)
                 try:
                     del model
                     del train_generator

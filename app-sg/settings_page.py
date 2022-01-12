@@ -11,21 +11,21 @@ def settings_layout():
               [sg.Frame('Choose model', [
                   # [sg.Text('Accuracy: 63% | Face Det. Accuracy: 73% | Face Pred. Time: 0.09s | First Load:  1s',
                   #          font=('Courier 10'))],
-                  [sg.Radio("ResNet9 PyTorch", group_id=1, default=True, key="-RESNET9-",
+                  [sg.Radio("ResNet9 PyTorch", group_id=1, default=True, key="-RESNET9-", enable_events=True,
                             circle_color='blue')],
 
                   # [sg.HSep(pad=(50, 10))],
 
                   # [sg.Text('Accuracy: 69% | Face Det. Accuracy: 75% | Face Pred. Time: 0.15s | First Load: 16s',
                   #          font=('Courier 10'), )],
-                  [sg.Radio("ResNet50 modified TensorFlow", group_id=1, key="-RESNET50-",
+                  [sg.Radio("ResNet50 modified TensorFlow", group_id=1, key="-RESNET50-", enable_events=True,
                             circle_color='blue')],
 
                   # [sg.HSep(pad=(50, 10))],
 
                   # [sg.Text('Choose from your trained models',
                   #          font=('Courier 10'))],
-                  [sg.Radio("Custom trained model", group_id=1, key="-CUSTOM-")],
+                  [sg.Radio("Custom trained model", group_id=1, key="-CUSTOM-", enable_events=True)],
 
                   [sg.DropDown([], key='-MODEL DROPDOWN-',
                                background_color='#e3e3e3',
@@ -79,7 +79,7 @@ def settings_layout():
               [sg.Frame("",
                         [[
                             sg.Button("Back", enable_events=True, size=(10, 1), font=('Courier New', 12))]],
-                        element_justification='center', border_width=0, pad=((0, 0), (16, 0)),
+                        element_justification='center', border_width=0, pad=((0, 0), (14, 0)),
                         vertical_alignment='center')],
               ]
     return layout
@@ -109,7 +109,9 @@ def settings_loop(window, loaded_stuff, faceCascade):
         if event == "Exit" or event == sg.WIN_CLOSED:
             break
 
-        if "Back" in event:
+        if "Back" in event and values['-CUSTOM-'] and not values['-MODEL DROPDOWN-']:
+            sg.popup_error('Choose a valid model!')
+        elif "Back" in event:
             back_event(window)
             return
 
@@ -117,8 +119,11 @@ def settings_loop(window, loaded_stuff, faceCascade):
             models_path = os.getcwd() + "/user_models"
             model_list = os.listdir(models_path)
             model_list = [os.path.splitext(x)[0] for x in model_list]
+            old_val = values["-MODEL DROPDOWN-"]
             window["-MODEL DROPDOWN-"].update(disabled=False)
-            window["-MODEL DROPDOWN-"].update(model_list)
+            window["-MODEL DROPDOWN-"].update(values=model_list)
+            window["-MODEL DROPDOWN-"].update(old_val)
+
         elif event == "-RESNET9-" or event == "-RESNET50-":
             window["-MODEL DROPDOWN-"].update(disabled=True)
 
