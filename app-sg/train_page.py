@@ -404,7 +404,7 @@ def train_loop(window, models):
         if event == '-SAVE-':
             models[model_name] = model
             if "PyTorch" in model_name:
-                temp = save_scores_plot(history, model_name, n_epochs, epoch, True)
+                temp = save_scores_plot(history, model_name, n_epochs, epoch, model_savename, True)
                 model_path = os.getcwd() + "/user_models/" + model_savename + '_('+ model_name +')' + '.pth'
                 torch.save(model.state_dict(), model_path)
                 try:
@@ -414,7 +414,7 @@ def train_loop(window, models):
                 except:
                     pass
             elif "TensorFlow" in model_name:
-                temp = save_scores_plot(tf_metrics, model_name, n_epochs, epoch, True)
+                temp = save_scores_plot(tf_metrics, model_name, n_epochs, epoch, model_savename, True)
                 model_path = os.getcwd() + "/user_models/" + model_savename + '_('+ model_name +')' + '.h5'
                 model.save_weights(model_path)
                 try:
