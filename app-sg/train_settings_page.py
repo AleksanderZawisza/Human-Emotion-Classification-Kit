@@ -23,7 +23,7 @@ def train_settings_layout():
                                 'PyTorch_ResNet50',
                                 # 'PyTorch_ResNet101',
                                 # 'PyTorch_ResNet152',
-                                ], default_value='TensorFlow_ResNet9', key='-TRAIN DROPDOWN-',
+                                ], default_value='', key='-TRAIN DROPDOWN-',
                                background_color='#e3e3e3',
                                auto_size_text=True, expand_x=True, readonly=True, text_color='black',
                                enable_events=True)],
@@ -87,13 +87,34 @@ def train_settings_layout():
     return layout
 
 
-def train_settings_loop(window, models):
+def train_settings_loop(window, models, train_choice):
     all_emotions_are_there = False
     go_menu_b = False
+
+    if not train_choice:
+        train_choice = sg.popup(
+            'Please choose if you want to train models\nusing PyTorch or TensorFlow.\nNote: If you want to change your choice\nplease restart the application.',
+            custom_text=("TensorFlow", "PyTorch"),  title='Library choice')
+        if train_choice == 'TensorFlow':
+            window['-TRAIN DROPDOWN-'].update(values=['TensorFlow_ResNet9',
+                                                        'TensorFlow_ResNet18',
+                                                        'TensorFlow_ResNet34',
+                                                        'TensorFlow_ResNet50',])
+            window['-TRAIN DROPDOWN-'].update('TensorFlow_ResNet9')
+        elif train_choice == 'PyTorch':
+            window['-TRAIN DROPDOWN-'].update(values=['PyTorch_ResNet9',
+                                                        'PyTorch_ResNet18',
+                                                        'PyTorch_ResNet34',
+                                                        'PyTorch_ResNet50',])
+            window['-TRAIN DROPDOWN-'].update('PyTorch_ResNet9')
+        else:
+            back_event(window)
+            return models, train_choice
+
     while True:
         if go_menu_b:
             back_event(window)
-            return models
+            return models, train_choice
 
         event, values = window.read()
 
@@ -102,7 +123,7 @@ def train_settings_loop(window, models):
 
         if "Back" in event:
             back_event(window)
-            return models
+            return models, train_choice
 
         if event == "-TRAIN FOLDER-":
             folder = values["-TRAIN FOLDER-"]

@@ -10,6 +10,7 @@ from train_page import train_layout
 from utils import back_event
 import cv2
 import os
+from utils_pt_train import ResNet
 
 
 class HECKApp:
@@ -47,6 +48,7 @@ class HECKApp:
         faceCascade = cv2.CascadeClassifier('faceutils/haarcascade_frontalface_default.xml')
         models = {'res9pt': [], 'res50tf': []}
         predictor = None
+        train_choice = None #'PyTorch' / 'TensorFlow'
 
         usr_model_path = os.getcwd().replace('\\', '/') + "/user_models"
         score_plots_path = os.getcwd().replace('\\', '/') + "/score_plots"
@@ -79,7 +81,7 @@ class HECKApp:
             if event == 'Train models':
                 window[f'-COL1-'].update(visible=False)
                 window[f'-COL7-'].update(visible=True)
-                models = train_settings_loop(window, models)
+                models, train_choice = train_settings_loop(window, models, train_choice)
             if 'Back' in event:
                 back_event(window)
         window.close()

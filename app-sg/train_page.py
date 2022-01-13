@@ -20,7 +20,7 @@ def train_layout():
               [sg.Multiline(key='-PROGRESS TEXT TRAIN-', font=('Courier New', 10), size=(90, 8), enable_events=False,
                             pad=(0, 20), reroute_stdout=True, auto_refresh=True,
                             write_only=True, reroute_cprint=True, disabled=True)],
-              [sg.Frame('Training scores:', [[sg.Image(key="-GRAPH-")]],
+              [sg.Frame('Training scores:', [[sg.Image(key="-GRAPH-", background_color='white')]],
                         size=(550, 350), border_width=0, pad=(0, 0),
                         element_justification='center'),
                sg.Frame('', [
@@ -119,10 +119,11 @@ def save_scores_plot(history, model_name, n_epochs, epoch, model_savename, is_la
         train_auc_rocs = history['auc_roc']
 
     fig, ax1 = plt.subplots()
+    ax1.set_ylim([0, max(train_losses)])
 
     ax1.plot(train_losses, color='crimson')
     plt.ylabel('loss')
-    plt.legend(['binary_crossentropy'], loc='lower left')
+    plt.legend(['binary_crossentropy'], loc='lower right')
 
     ax2 = ax1.twinx()
 
@@ -143,7 +144,7 @@ def save_scores_plot(history, model_name, n_epochs, epoch, model_savename, is_la
         file_path = os.getcwd() + '/model_scores/' + file_name
     else:
         file_path = os.getcwd() + '/score_plots/' + file_name
-    plt.savefig(file_path, bbox_inches='tight')
+    plt.savefig(file_path, bbox_inches='tight', transparent=True)
     return file_path
 
 

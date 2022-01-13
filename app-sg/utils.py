@@ -9,9 +9,11 @@ import numpy as np
 from PIL import Image, ImageFont, ImageDraw
 import dlib
 from keras.models import load_model
-from utils_tf_train import EmotionsRN9, EmotionsRN18, EmotionsRN34
+from utils_tf_train import EmotionsRN9, EmotionsRN18, EmotionsRN34, load_filenames, old_generator, F1_Score
 from tensorflow.keras.applications import ResNet50
 from utils_pt_train import ResNet, ResNet18_pt, ResNet34_pt, ResNet50_pt
+# import keras
+# import tensorflow as tf
 
 
 def back_event(window):
@@ -298,18 +300,41 @@ def predict_restf(img, model):
 
 if __name__ == "__main__":
     emotions_dict = {"anger": 0, "disgust": 1, "fear": 2, "happiness": 3, "neutrality": 4, "sadness": 5, "surprise": 6}
-    image_path = "example_images/sad1.png"
-    img = cv2.imread(image_path)
+    # image_path = "example_images/sad1.png"
+    # img = cv2.imread(image_path)
     # start = time.time()
-    # predictor = dlib.shape_predictor('faceutils/shape_predictor_68_face_landmarks.dat')
-    # model = load_res50tf()
+    predictor = dlib.shape_predictor('faceutils/shape_predictor_68_face_landmarks.dat')
+    model = load_res50tf()
     # end = start - time.time()
     # pred = predict_res50tf(img, model, predictor)
     # model = load_res9pt()
 
-    model = EmotionsRN9()
-    model.load_weights("user_models/testmodel1_(TensorFlow_ResNet9).h5")
-    pred = predict_restf(img, model)
-    img = write_emotions_on_img(img, pred, (0, img.shape[0]), img.shape[1])
-    cv2.imwrite('test.png', img)
+    SGD_LEARNING_RATE = 0.01
+    ADAM_LEARNING_RATE = 0.001
+    SGD_DECAY = 0.0001
+    BS = 16
+    data_dir = 'C:/Users/hp/Documents/data/test'
+
+    samples_train = load_filenames(data_dir)
+    train_generator = old_generator(samples_train, predictor, aug=False, batch_size=BS)
+    # train_generator = generator(samples_train, True, batch_size=BS,  window=window)
+
+    # sgd = keras.optimizers.SGD(lr=SGD_LEARNING_RATE, momentum=0.9, decay=SGD_DECAY, nesterov=True)
+    # model.compile(optimizer=sgd, loss='categorical_crossentropy', metrics=['accuracy',
+    #                                                                        tf.keras.metrics.Precision(name='precision'),
+    #                                                                        tf.keras.metrics.Recall(name='recall'),
+    #                                                                        F1_Score(name='f1_score'),
+    #                                                                        tf.keras.metrics.AUC(name='auc_roc')])
+    # metrics = model.evaluate(train_generator, steps=len(samples_train) // BS)
+    # print(metrics)
+
+    #     for key in metrics.keys():
+    #         metrics[key].extend(history.history[key])
+    #     print(metrics)
+
+    # model = EmotionsRN9()
+    # model.load_weights("user_models/testmodel1_(TensorFlow_ResNet9).h5")
+    # pred = predict_restf(img, model)
+    # img = write_emotions_on_img(img, pred, (0, img.shape[0]), img.shape[1])
+    # cv2.imwrite('test.png', img)
 # print(pred)

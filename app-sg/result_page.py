@@ -32,7 +32,7 @@ def result_layout():
               [sg.Frame("", [[
                   sg.Button('Back', enable_events=True, size=(10, 1), font=('Courier New', 12)),
                   sg.Button('Main menu', key='-MENU-', enable_events=True, size=(10, 1), font=('Courier New', 12))]],
-                        element_justification='center', border_width=0, pad=(0, 0),
+                        element_justification='center', border_width=0, pad=((0, 0), (20, 0)),
                         vertical_alignment='center')],
               ]
     return layout

@@ -58,20 +58,30 @@ def progress_loop(window, chosen_stuff, values, faceCascade, models, predictor):
     # window['-PROGRESS TEXT-'].update(progress_text)
     window['-PROGRESS BAR-'].update(i, steps)
 
+    loaded_flag = True
     if res9pt and not models['res9pt']:
         sg.cprint('* Loading model...', key="-PROGRESS TEXT-")
         models['res9pt'] = load_res9pt()
-    elif res50tf and not models['res50tf']:
-        sg.cprint('Loading model...', key="-PROGRESS TEXT-")
+        loaded_flag = False
+
+    if res50tf and not models['res50tf']:
+        sg.cprint('* Loading model...', key="-PROGRESS TEXT-")
         models['res50tf'] = load_res50tf()
-    elif model_text not in models:
-        sg.cprint('Loading model...', key="-PROGRESS TEXT-")
-        if '(TensorFlow' in model_text: ext = '.h5'
-        elif '(PyTorch' in model_text: ext = '.pth'
+        loaded_flag = False
+
+    if not res9pt and not res50tf and model_text not in models:
+        sg.cprint('* Loading model...', key="-PROGRESS TEXT-")
+        if '(TensorFlow' in model_text:
+            ext = '.h5'
+        elif '(PyTorch' in model_text:
+            ext = '.pth'
         model_filename = model_text + ext
         models[model_text] = load_custom_model(model_filename)
-    else:
+        loaded_flag = False
+
+    if loaded_flag:
         sg.cprint('* Model already loaded', key="-PROGRESS TEXT-")
+
     if not predictor:
         predictor = dlib.shape_predictor('faceutils/shape_predictor_68_face_landmarks.dat')
 

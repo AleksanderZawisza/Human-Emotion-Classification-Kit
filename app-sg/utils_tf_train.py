@@ -4,6 +4,7 @@ import random
 import cv2
 import os
 import PySimpleGUI as sg
+import dlib
 
 class tf_flags_StopSave():
     def __init__(self, stopped=False, save=False):
@@ -51,6 +52,12 @@ class F1_Score(tf.keras.metrics.Metric):
         self.precision_fn.reset_states()
         self.recall_fn.reset_states()
         self.f1.assign(0)
+
+def facial_landmarks(image, predictor):
+    # image = cv2.imread(filepath)
+    face_rects = [dlib.rectangle(left=1, top=1, right=len(image) - 1, bottom=len(image) - 1)]
+    face_landmarks = np.matrix([[p.x, p.y] for p in predictor(image, face_rects[0]).parts()])
+    return face_landmarks
 
 def conv_block_r9(in_channels, out_channels, pool=False):
     inputs = tf.keras.Input((None, None, in_channels))
@@ -246,6 +253,59 @@ def generator(samples, aug=False, batch_size=32, shuffle_data=True, resize=197, 
             # The generator-y part: yield the next training batch
             # yield [X1, X2], y
             yield X1, y
+
+def old_generator(samples, predictor, aug=False, batch_size=32, shuffle_data=True, resize=197, window=None):
+    """
+    Yields the next training batch.
+    Suppose `samples` is an array [[image1_filename,label1], [image2_filename,label2],...].
+    """
+    num_samples = len(samples)
+    while True:  # Loop forever so the generator never terminates
+        random.shuffle(samples)
+
+        # Get index to start each batch: [0, batch_size, 2*batch_size, ..., max multiple of batch_size <= num_samples]
+        for offset in range(0, num_samples, batch_size):
+            # Get the samples you'll use in this batch
+            batch_samples = samples[offset:offset + batch_size]
+
+            # Initialise X_train and y_train arrays for this batch
+            X1 = []
+            X2 = []
+            y = []
+
+            # For each example
+            for batch_sample in batch_samples:
+                # Load image (X) and label (y)
+                img_path = batch_sample[0]
+                label = batch_sample[1]
+                img = cv2.imread(img_path)
+                img = cv2.resize(img, (resize, resize))
+                if aug:  # augumentations
+                    img = rotate_image(img, random.uniform(-10, 10))
+                features = facial_landmarks(img, predictor)
+                img = img / 255
+
+                onehot = [0 for i in range(7)]
+                onehot[label] += 1
+
+                # apply any kind of preprocessing
+                # Add example to arrays
+                X1.append(img)
+                X2.append(features)
+                y.append(onehot)
+
+            # Make sure they're numpy arrays (as opposed to lists)
+            X1 = np.array(X1)
+            X2 = np.array(X2)
+            y = np.array(y)
+
+            if window:
+                print('', end='')
+                window.refresh()
+
+            # The generator-y part: yield the next training batch
+            yield [X1, X2], y
+            # yield X1, y
 
 def image_generator(dataset, aug=False, BS=32, get_datagen=False):
     if aug:

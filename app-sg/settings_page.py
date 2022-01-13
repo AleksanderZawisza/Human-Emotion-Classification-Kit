@@ -11,6 +11,7 @@ def settings_layout():
               [sg.Frame('Choose model', [
                   # [sg.Text('Accuracy: 63% | Face Det. Accuracy: 73% | Face Pred. Time: 0.09s | First Load:  1s',
                   #          font=('Courier 10'))],
+                  [sg.Frame('', [
                   [sg.Radio("ResNet9 PyTorch", group_id=1, default=True, key="-RESNET9-", enable_events=True,
                             circle_color='blue')],
 
@@ -30,11 +31,14 @@ def settings_layout():
                   [sg.DropDown([], key='-MODEL DROPDOWN-',
                                background_color='#e3e3e3',
                                auto_size_text=True, expand_x=True, readonly=True, text_color='black',
-                               enable_events=True, disabled=True)]
+                               enable_events=True, disabled=True)]],
+                            expand_x=True, border_width=0, ),
+                   sg.Frame('', [[sg.Image(key="-SETTINGS METRIC IMAGE-")]],
+                            expand_x=True, expand_y=True, border_width=0, element_justification='center')]
 
               ],
-                        expand_x=True, pad=((0, 0), (8, 0)), size=(700, 145), border_width=0,
-                        font=('Courier New', 12), element_justification='center', vertical_alignment='middle')],
+                        expand_x=True, pad=((0, 0), (8, 0)), size=(700, 170), border_width=0,
+                        font=('Courier New', 11), element_justification='center', vertical_alignment='middle')],
               [sg.HSep()],
               [sg.Frame('Use Face Detection?',
                         [[sg.Radio("Yes", group_id=2, default=True, key="-FACE DETECTION-", enable_events=True,
@@ -74,12 +78,12 @@ def settings_layout():
                                        expand_x=True, expand_y=True, border_width=0, pad=(0, 0),
                                        element_justification='center')],
                          ], expand_x=True, expand_y=True, border_width=0, font=('Courier New', 11))]],
-                        expand_x=True, pad=((0, 0), (5, 0)), size=(560, 315), border_width=0,
-                        font=('Courier New', 12), element_justification="center")],
+                        expand_x=True, pad=((0, 0), (5, 0)), size=(560, 300), border_width=0,
+                        font=('Courier New', 11), element_justification="center")],
               [sg.Frame("",
                         [[
                             sg.Button("Back", enable_events=True, size=(10, 1), font=('Courier New', 12))]],
-                        element_justification='center', border_width=0, pad=((0, 0), (14, 0)),
+                        element_justification='center', border_width=0, pad=((0, 0), (2, 0)),
                         vertical_alignment='center')],
               ]
     return layout
@@ -88,6 +92,22 @@ def settings_layout():
 def settings_loop(window, loaded_stuff, faceCascade):
     cwd = os.getcwd().replace('\\', '/')
     example_path = "example_images"
+
+
+    filepath = 'model_scores/default_pt_resnet9.png'
+    try:
+        im = Image.open(filepath)
+    except:
+        pass
+    width, height = 400, 140
+    scale = max(im.width / width, im.height / height)
+    if scale > 1:
+        w, h = int(im.width / scale), int(im.height / scale)
+        im = im.resize((w, h), resample=Image.CUBIC)
+    with BytesIO() as output:
+        im.save(output, format="PNG")
+        data = output.getvalue()
+    window["-SETTINGS METRIC IMAGE-"].update(data=data)
 
     # when user didnt load any images to predict on (get defaults)
     if not loaded_stuff:
@@ -105,6 +125,7 @@ def settings_loop(window, loaded_stuff, faceCascade):
     while True:
         event, values = window.read()
         width, height = (390, 180)
+        width2, height2 = (400, 140)
 
         if event == "Exit" or event == sg.WIN_CLOSED:
             break
@@ -123,9 +144,58 @@ def settings_loop(window, loaded_stuff, faceCascade):
             window["-MODEL DROPDOWN-"].update(disabled=False)
             window["-MODEL DROPDOWN-"].update(values=model_list)
             window["-MODEL DROPDOWN-"].update(old_val)
+            if old_val:
+                filepath = f'model_scores/{old_val}.png'
+                try:
+                    im = Image.open(filepath)
+                except:
+                    pass
+                width, height = width2, height2
+                scale = max(im.width / width, im.height / height)
+                if scale > 1:
+                    w, h = int(im.width / scale), int(im.height / scale)
+                    im = im.resize((w, h), resample=Image.CUBIC)
+                with BytesIO() as output:
+                    im.save(output, format="PNG")
+                    data = output.getvalue()
+                window["-SETTINGS METRIC IMAGE-"].update(data=data)
 
         elif event == "-RESNET9-" or event == "-RESNET50-":
             window["-MODEL DROPDOWN-"].update(disabled=True)
+            if event =="-RESNET9-": filepath = 'model_scores/default_pt_resnet9.png'
+            else: filepath = 'model_scores/default_tf_resnet50.png'
+            try:
+                im = Image.open(filepath)
+            except:
+                pass
+            width, height = width2, height2
+            scale = max(im.width / width, im.height / height)
+            if scale > 1:
+                w, h = int(im.width / scale), int(im.height / scale)
+                im = im.resize((w, h), resample=Image.CUBIC)
+            with BytesIO() as output:
+                im.save(output, format="PNG")
+                data = output.getvalue()
+            window["-SETTINGS METRIC IMAGE-"].update(data=data)
+
+        if event=='-MODEL DROPDOWN-':
+            val = values["-MODEL DROPDOWN-"]
+            if val:
+                filepath = f'model_scores/{val}.png'
+                try:
+                    im = Image.open(filepath)
+                except:
+                    pass
+                width, height = width2, height2
+                scale = max(im.width / width, im.height / height)
+                if scale > 1:
+                    w, h = int(im.width / scale), int(im.height / scale)
+                    im = im.resize((w, h), resample=Image.CUBIC)
+                with BytesIO() as output:
+                    im.save(output, format="PNG")
+                    data = output.getvalue()
+                window["-SETTINGS METRIC IMAGE-"].update(data=data)
+
 
         if event == "-NO FACE DETECTION-":
             window['-FACEDET DROPDOWN-'].update(disabled=True)
