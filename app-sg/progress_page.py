@@ -6,6 +6,7 @@ from utils import list_all_pictures, load_res9pt, load_res50tf, prediction_combo
 from result_page import result_loop
 import dlib
 import shutil
+import time
 
 
 def progress_layout():
@@ -109,13 +110,13 @@ def progress_loop(window, chosen_stuff, values, faceCascade, models, predictor):
         event, values = window.read(0)
 
         if event == "Exit" or event == sg.WIN_CLOSED or event is None:
-            break
+            return models, predictor, go_menu
 
         if '-CANCEL-' in event:
             sg.cprint("* Prediction cancelled", text_color='red', key="-PROGRESS TEXT-")
             window[f'-COL5-'].update(visible=False)
             window[f'-COL4-'].update(visible=True)
-            return models, predictor
+            return models, predictor, go_menu
 
         if os.path.isdir(chosen_path):
             pics_in_folder = list_all_pictures([chosen_path])

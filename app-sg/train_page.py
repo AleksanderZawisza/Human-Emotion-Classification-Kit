@@ -151,6 +151,12 @@ def save_scores_plot(history, model_name, n_epochs, epoch, model_savename, is_la
 def train_loop(window, models):
     event, values = window.read(0)
 
+    try:
+        K.clear_session()
+        torch.cuda.empty_cache()
+    except:
+        pass
+
     window["-CANCEL_B-"].update(text="Cancel & Back")
     window["-SAVE-"].update(text="Stop & Save")
     window["-MENU_B-"].update(disabled=True)
@@ -300,12 +306,12 @@ def train_loop(window, models):
 
         if stopped:
             if save:
-                if 'TensorFlow' in model_name:
+                if '(TensorFlow' in model_name:
                     sg.cprint("\n* Training was manually stopped", text_color='blue', key="-PROGRESS TEXT TRAIN-")
                 else:
                     sg.cprint("* Training was manually stopped", text_color='blue', key="-PROGRESS TEXT TRAIN-")
                 models[model_name] = model
-                if "PyTorch" in model_name:
+                if "(PyTorch" in model_name:
                     temp = save_scores_plot(history, model_name, n_epochs, epoch, model_savename, True)
                     model_path = os.getcwd() + "/user_models/" + model_savename + '_(' + model_name + ')' + '.pth'
                     torch.save(model.state_dict(), model_path)
@@ -315,7 +321,7 @@ def train_loop(window, models):
                         torch.cuda.empty_cache()
                     except:
                         pass
-                elif "TensorFlow" in model_name:
+                elif "(TensorFlow" in model_name:
                     temp = save_scores_plot(tf_metrics, model_name, n_epochs, epoch, model_savename, True)
                     model_path = os.getcwd() + "/user_models/" + model_savename + '_(' + model_name + ')' + '.h5'
                     model.save_weights(model_path)
@@ -332,7 +338,7 @@ def train_loop(window, models):
                 window[f'-COL7-'].update(visible=True)
                 return models, go_menu_b
             else:
-                if 'TensorFlow' in model_name:
+                if '(TensorFlow' in model_name:
                     sg.cprint("\n* Training cancelled", text_color='red', key="-PROGRESS TEXT TRAIN-")
                     try:
                         del model

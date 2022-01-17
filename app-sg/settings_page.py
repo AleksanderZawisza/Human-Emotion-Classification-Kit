@@ -131,7 +131,7 @@ def settings_loop(window, loaded_stuff, faceCascade):
             break
 
         if "Back" in event and values['-CUSTOM-'] and not values['-MODEL DROPDOWN-']:
-            sg.popup_error('Choose a valid model!')
+            sg.PopupOK('Choose a valid model!', title='EMPTY MODEL CHOICE')
         elif "Back" in event:
             back_event(window)
             return

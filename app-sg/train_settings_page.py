@@ -111,6 +111,16 @@ def train_settings_loop(window, models, train_choice):
             back_event(window)
             return models, train_choice
 
+    if train_choice == 'PyTorch':
+        for key in models.keys():
+            if key=='res50tf' or '(TensorFlow' in key:
+                if models[key]:
+                    sg.popup_ok('TensorFlow models detected in memory.\nTo use PyTorch training please reload app.',
+                                title='TensorFlow models in memory')
+                    back_event(window)
+                    return models, train_choice
+
+
     while True:
         if go_menu_b:
             back_event(window)
@@ -119,7 +129,7 @@ def train_settings_loop(window, models, train_choice):
         event, values = window.read()
 
         if event == "Exit" or event == sg.WIN_CLOSED:
-            break
+            return models, train_choice
 
         if "Back" in event:
             back_event(window)

@@ -10,6 +10,7 @@ from train_page import train_layout
 from utils import back_event
 import cv2
 import os
+import traceback
 from utils_pt_train import ResNet
 
 
@@ -88,4 +89,11 @@ class HECKApp:
 
 
 if __name__ == "__main__":
-    app = HECKApp()
+    try:
+        app = HECKApp()
+    except Exception as e:
+        tb = traceback.format_exc()
+        # sg.Print(f'An error happened.  Here is the info:', e, tb)
+        sg.popup_scrolled(f'An error happened. Here is the info:\n\n{e}\n', tb, title='ERROR', button_color='red')
+
+

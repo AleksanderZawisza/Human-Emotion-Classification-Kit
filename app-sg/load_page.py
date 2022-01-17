@@ -64,7 +64,7 @@ def load_loop(window, loaded_stuff):
         # print(window['-FILE LIST-'].get_list_values())
 
         if event == "Exit" or event == sg.WIN_CLOSED:
-            break
+            return loaded_stuff
 
         if 'Back' in event:
             back_event(window)
