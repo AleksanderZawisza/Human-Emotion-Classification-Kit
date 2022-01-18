@@ -47,13 +47,6 @@ class ImageClassificationBase(nn.Module):
         _, preds = torch.max(out, dim=1)
         return [loss, preds, labels]
 
-    # def validation_step(self, batch):
-    #     images, labels = batch
-    #     out = self(images)
-    #     loss = F.cross_entropy(out, labels)
-    #     acc = accuracy(labels, out)
-    #     return {'val_loss': loss.detach(), 'val_acc': acc}
-
     def test_func(self, batch):
         images, labels = batch
         out = self(images)
@@ -235,21 +228,6 @@ def ResNet152_pt(img_channels=3, num_classes=1000):
     return ResNetBase(152, Block, img_channels, num_classes)
 
 
-# training utils
-
-# @torch.no_grad()
-# def evaluate(model, train_loader):
-#     model.eval()
-#     batch = next(iter(train_loader))
-#     outputs = model.validation_step(batch)
-#     return model.validation_epoch_end(outputs)
-
-
-# def get_lr(optimizer):
-#     for param_group in optimizer.param_groups:
-#         return param_group['lr']
-
-
 def get_default_device():
     if torch.cuda.is_available():
         return torch.device('cuda')
@@ -291,36 +269,3 @@ def make_train_loader_pt(data_dir, batch_size):
     train_dl = DataLoader(train_ds, batch_size, shuffle=True, num_workers=2, pin_memory=True)
     train_dl = DeviceDataLoader(train_dl, device)
     return train_dl, device
-
-# if __name__ == "__main__":
-#     # model = ResNet18(img_channels=1, num_classes=7)
-#     # image_path = "example_images/sad1.png"
-#     # img = cv2.imread(image_path)
-#     # img = np.asarray(img)
-#     #
-#     # preprocess = tt.Compose([tt.Resize((64, 64)),
-#     #                          tt.Grayscale(num_output_channels=1),
-#     #                          tt.ToTensor()])
-#     #
-#     # img_preprocessed = preprocess(Image.fromarray(img))
-#     # batch_img_tensor = torch.unsqueeze(img_preprocessed, 0)
-#     # out = model(batch_img_tensor).to("cuda")
-#     # percentage = torch.nn.functional.softmax(out, dim=1)[0] * 100  # procenty
-#     # print(percentage.tolist())
-#     print("Detected device:")
-#     print(get_default_device())
-#
-#     data_dir = 'C:/Users/Aleksander Podsiad/Desktop/Projekt Emocje/Dane'
-#     # lokalizacja folderu z danymi test, train i dev, jako train używam test bo inaczej zamula
-#     train_dl, valid_dl, device = make_data_loaders_pt(data_dir)
-#     history = []
-#     model = to_device(ResNet18(1, 7), device)
-#     epochs = 3
-#     max_lr = 0.001
-#     grad_clip = 0.2
-#     weight_decay = 1e-4
-#     opt_func = torch.optim.SGD  # torch.optim.Adam
-#     history += train_cycle_pt(epochs, max_lr, model, train_dl, valid_dl,
-#                               grad_clip=grad_clip, weight_decay=weight_decay, opt_func=opt_func)
-#     train_accs = [x['train_acc'] for x in history]
-#     print(train_accs)

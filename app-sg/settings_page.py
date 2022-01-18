@@ -12,26 +12,26 @@ def settings_layout():
                   # [sg.Text('Accuracy: 63% | Face Det. Accuracy: 73% | Face Pred. Time: 0.09s | First Load:  1s',
                   #          font=('Courier 10'))],
                   [sg.Frame('', [
-                  [sg.Radio("ResNet9 PyTorch", group_id=1, default=True, key="-RESNET9-", enable_events=True,
-                            circle_color='blue')],
+                      [sg.Radio("ResNet9 PyTorch", group_id=1, default=True, key="-RESNET9-", enable_events=True,
+                                circle_color='blue')],
 
-                  # [sg.HSep(pad=(50, 10))],
+                      # [sg.HSep(pad=(50, 10))],
 
-                  # [sg.Text('Accuracy: 69% | Face Det. Accuracy: 75% | Face Pred. Time: 0.15s | First Load: 16s',
-                  #          font=('Courier 10'), )],
-                  [sg.Radio("ResNet50 modified TensorFlow", group_id=1, key="-RESNET50-", enable_events=True,
-                            circle_color='blue')],
+                      # [sg.Text('Accuracy: 69% | Face Det. Accuracy: 75% | Face Pred. Time: 0.15s | First Load: 16s',
+                      #          font=('Courier 10'), )],
+                      [sg.Radio("ResNet50 modified TensorFlow", group_id=1, key="-RESNET50-", enable_events=True,
+                                circle_color='blue')],
 
-                  # [sg.HSep(pad=(50, 10))],
+                      # [sg.HSep(pad=(50, 10))],
 
-                  # [sg.Text('Choose from your trained models',
-                  #          font=('Courier 10'))],
-                  [sg.Radio("Custom trained model", group_id=1, key="-CUSTOM-", enable_events=True)],
+                      # [sg.Text('Choose from your trained models',
+                      #          font=('Courier 10'))],
+                      [sg.Radio("Custom trained model", group_id=1, key="-CUSTOM-", enable_events=True)],
 
-                  [sg.DropDown([], key='-MODEL DROPDOWN-',
-                               background_color='#e3e3e3',
-                               auto_size_text=True, expand_x=True, readonly=True, text_color='black',
-                               enable_events=True, disabled=True)]],
+                      [sg.DropDown([], key='-MODEL DROPDOWN-',
+                                   background_color='#e3e3e3',
+                                   auto_size_text=True, expand_x=True, readonly=True, text_color='black',
+                                   enable_events=True, disabled=True)]],
                             expand_x=True, border_width=0, ),
                    sg.Frame('', [[sg.Image(key="-SETTINGS METRIC IMAGE-")]],
                             expand_x=True, expand_y=True, border_width=0, element_justification='center')]
@@ -93,7 +93,6 @@ def settings_loop(window, loaded_stuff, faceCascade):
     cwd = os.getcwd().replace('\\', '/')
     example_path = "example_images"
 
-
     filepath = 'model_scores/default_pt_resnet9.png'
     try:
         im = Image.open(filepath)
@@ -144,7 +143,7 @@ def settings_loop(window, loaded_stuff, faceCascade):
             window["-MODEL DROPDOWN-"].update(disabled=False)
             window["-MODEL DROPDOWN-"].update(values=model_list)
             window["-MODEL DROPDOWN-"].update(old_val)
-            #if old_val:
+            # if old_val:
             filepath = f'model_scores/{old_val}.png'
             try:
                 im = Image.open(filepath)
@@ -162,8 +161,10 @@ def settings_loop(window, loaded_stuff, faceCascade):
 
         elif event == "-RESNET9-" or event == "-RESNET50-":
             window["-MODEL DROPDOWN-"].update(disabled=True)
-            if event =="-RESNET9-": filepath = 'model_scores/default_pt_resnet9.png'
-            else: filepath = 'model_scores/default_tf_resnet50.png'
+            if event == "-RESNET9-":
+                filepath = 'model_scores/default_pt_resnet9.png'
+            else:
+                filepath = 'model_scores/default_tf_resnet50.png'
             try:
                 im = Image.open(filepath)
             except:
@@ -178,9 +179,9 @@ def settings_loop(window, loaded_stuff, faceCascade):
                 data = output.getvalue()
             window["-SETTINGS METRIC IMAGE-"].update(data=data)
 
-        if event=='-MODEL DROPDOWN-':
+        if event == '-MODEL DROPDOWN-':
             val = values["-MODEL DROPDOWN-"]
-            #if val:
+            # if val:
             filepath = f'model_scores/{val}.png'
             try:
                 im = Image.open(filepath)
@@ -195,7 +196,6 @@ def settings_loop(window, loaded_stuff, faceCascade):
                 im.save(output, format="PNG")
                 data = output.getvalue()
             window["-SETTINGS METRIC IMAGE-"].update(data=data)
-
 
         if event == "-NO FACE DETECTION-":
             window['-FACEDET DROPDOWN-'].update(disabled=True)

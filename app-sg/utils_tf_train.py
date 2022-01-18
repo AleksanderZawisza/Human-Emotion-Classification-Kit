@@ -6,14 +6,17 @@ import os
 import PySimpleGUI as sg
 import dlib
 
+
 class tf_flags_StopSave():
     def __init__(self, stopped=False, save=False):
         self.stopped = stopped
         self.save = save
 
+
 class StopTrainingOnWindowCloseAndPause(tf.keras.callbacks.Callback):
     """ NewCallback descends from Callback
     """
+
     def __init__(self, window, tf_flags):
         """ Save params in constructor
         """
@@ -29,6 +32,7 @@ class StopTrainingOnWindowCloseAndPause(tf.keras.callbacks.Callback):
             if event == '-SAVE-':
                 self.tf_flags.stopped = True
                 self.tf_flags.save = True
+
 
 class F1_Score(tf.keras.metrics.Metric):
 
@@ -53,25 +57,28 @@ class F1_Score(tf.keras.metrics.Metric):
         self.recall_fn.reset_states()
         self.f1.assign(0)
 
+
 def facial_landmarks(image, predictor):
     # image = cv2.imread(filepath)
     face_rects = [dlib.rectangle(left=1, top=1, right=len(image) - 1, bottom=len(image) - 1)]
     face_landmarks = np.matrix([[p.x, p.y] for p in predictor(image, face_rects[0]).parts()])
     return face_landmarks
 
+
 def conv_block_r9(in_channels, out_channels, pool=False):
     inputs = tf.keras.Input((None, None, in_channels))
-    results = tf.keras.layers.Conv2D(out_channels, kernel_size = (3,3), padding = 'same')(inputs)
+    results = tf.keras.layers.Conv2D(out_channels, kernel_size=(3, 3), padding='same')(inputs)
     results = tf.keras.layers.BatchNormalization()(results)
     results = tf.keras.layers.ReLU()(results)
-    if pool: results = tf.keras.layers.MaxPool2D(pool_size = (3,3), strides = (2,2), padding = 'same')(results)
-    return tf.keras.Model(inputs = inputs, outputs = results)
+    if pool: results = tf.keras.layers.MaxPool2D(pool_size=(3, 3), strides=(2, 2), padding='same')(results)
+    return tf.keras.Model(inputs=inputs, outputs=results)
+
 
 def ResNet9(**kwargs):
     inputs = tf.keras.Input((None, None, 3))
-    results =  conv_block_r9(in_channels=3, out_channels=64)(inputs)
+    results = conv_block_r9(in_channels=3, out_channels=64)(inputs)
 
-    results =  conv_block_r9(64, 64, pool=True)(results)
+    results = conv_block_r9(64, 64, pool=True)(results)
 
     shortcut = conv_block_r9(64, 64, pool=True)(results)
     results = conv_block_r9(64, 32)(shortcut)
@@ -93,83 +100,90 @@ def ResNet9(**kwargs):
 
     results = tf.keras.layers.MaxPool2D(pool_size=(6, 6))(results)
     results = tf.keras.layers.Flatten()(results)
-    return tf.keras.Model(inputs = inputs, outputs = results, **kwargs)
+    return tf.keras.Model(inputs=inputs, outputs=results, **kwargs)
+
 
 def EmotionsRN9():
     inputs = tf.keras.Input((197, 197, 3))
-    results = ResNet9(name = 'resnet9')(inputs)
-    results = tf.keras.layers.Dense(7, activation = tf.keras.activations.softmax)(results)
-    return tf.keras.Model(inputs = inputs, outputs = results)
+    results = ResNet9(name='resnet9')(inputs)
+    results = tf.keras.layers.Dense(7, activation=tf.keras.activations.softmax)(results)
+    return tf.keras.Model(inputs=inputs, outputs=results)
 
-def ResnetBlock(in_channels, out_channels, down_sample = False):
-    inputs = tf.keras.Input((None, None, in_channels)) # inputs.shape = (batch, height, width, in_channels)
+
+def ResnetBlock(in_channels, out_channels, down_sample=False):
+    inputs = tf.keras.Input((None, None, in_channels))  # inputs.shape = (batch, height, width, in_channels)
     if down_sample:
-        shortcut = tf.keras.layers.Conv2D(out_channels, kernel_size = (1,1), strides = (2,2), padding = 'same')(inputs)
+        shortcut = tf.keras.layers.Conv2D(out_channels, kernel_size=(1, 1), strides=(2, 2), padding='same')(inputs)
         shortcut = tf.keras.layers.BatchNormalization()(shortcut)
     else:
         shortcut = inputs
-    results = tf.keras.layers.Conv2D(out_channels, kernel_size = (3,3), strides = (2,2) if down_sample else (1,1), padding = 'same')(inputs)
+    results = tf.keras.layers.Conv2D(out_channels, kernel_size=(3, 3), strides=(2, 2) if down_sample else (1, 1),
+                                     padding='same')(inputs)
     results = tf.keras.layers.BatchNormalization()(results)
     results = tf.keras.layers.ReLU()(results)
-    results = tf.keras.layers.Conv2D(out_channels, kernel_size = (3,3), strides = (1,1), padding = 'same')(results)
+    results = tf.keras.layers.Conv2D(out_channels, kernel_size=(3, 3), strides=(1, 1), padding='same')(results)
     results = tf.keras.layers.BatchNormalization()(results)
     results = tf.keras.layers.Add()([results, shortcut])
     results = tf.keras.layers.ReLU()(results)
-    return tf.keras.Model(inputs = inputs, outputs = results)
+    return tf.keras.Model(inputs=inputs, outputs=results)
+
 
 def ResNet18(**kwargs):
     inputs = tf.keras.Input((None, None, 3))
-    results = tf.keras.layers.Conv2D(64, kernel_size = (7,7), strides = (2,2), padding = 'same')(inputs)
+    results = tf.keras.layers.Conv2D(64, kernel_size=(7, 7), strides=(2, 2), padding='same')(inputs)
     results = tf.keras.layers.BatchNormalization()(results)
     results = tf.keras.layers.ReLU()(results)
-    results = tf.keras.layers.MaxPool2D(pool_size = (3,3), strides = (2,2), padding = 'same')(results)
+    results = tf.keras.layers.MaxPool2D(pool_size=(3, 3), strides=(2, 2), padding='same')(results)
     results = ResnetBlock(64, 64)(results)
     results = ResnetBlock(64, 64)(results)
-    results = ResnetBlock(64, 128, down_sample = True)(results)
+    results = ResnetBlock(64, 128, down_sample=True)(results)
     results = ResnetBlock(128, 128)(results)
-    results = ResnetBlock(128, 256, down_sample = True)(results)
+    results = ResnetBlock(128, 256, down_sample=True)(results)
     results = ResnetBlock(256, 256)(results)
-    results = ResnetBlock(256, 512, down_sample = True)(results)
+    results = ResnetBlock(256, 512, down_sample=True)(results)
     results = ResnetBlock(512, 512)(results)
-    results = tf.keras.layers.GlobalAveragePooling2D()(results) # results.shape = (batch, 512)
-    return tf.keras.Model(inputs = inputs, outputs = results, **kwargs)
+    results = tf.keras.layers.GlobalAveragePooling2D()(results)  # results.shape = (batch, 512)
+    return tf.keras.Model(inputs=inputs, outputs=results, **kwargs)
+
 
 def EmotionsRN18():
     inputs = tf.keras.Input((197, 197, 3))
-    results = ResNet18(name = 'resnet18')(inputs)
-    results = tf.keras.layers.Dense(7, activation = tf.keras.activations.softmax)(results)
-    return tf.keras.Model(inputs = inputs, outputs = results)
+    results = ResNet18(name='resnet18')(inputs)
+    results = tf.keras.layers.Dense(7, activation=tf.keras.activations.softmax)(results)
+    return tf.keras.Model(inputs=inputs, outputs=results)
+
 
 def ResNet34(**kwargs):
     inputs = tf.keras.Input((None, None, 3))
-    results = tf.keras.layers.Conv2D(64, kernel_size = (7,7), strides = (2,2), padding = 'same')(inputs)
+    results = tf.keras.layers.Conv2D(64, kernel_size=(7, 7), strides=(2, 2), padding='same')(inputs)
     results = tf.keras.layers.BatchNormalization()(results)
     results = tf.keras.layers.ReLU()(results)
-    results = tf.keras.layers.MaxPool2D(pool_size = (3,3), strides = (2,2), padding = 'same')(results)
+    results = tf.keras.layers.MaxPool2D(pool_size=(3, 3), strides=(2, 2), padding='same')(results)
     results = ResnetBlock(64, 64)(results)
     results = ResnetBlock(64, 64)(results)
     results = ResnetBlock(64, 64)(results)
-    results = ResnetBlock(64, 128, down_sample = True)(results)
+    results = ResnetBlock(64, 128, down_sample=True)(results)
     results = ResnetBlock(128, 128)(results)
     results = ResnetBlock(128, 128)(results)
     results = ResnetBlock(128, 128)(results)
-    results = ResnetBlock(128, 256, down_sample = True)(results)
+    results = ResnetBlock(128, 256, down_sample=True)(results)
     results = ResnetBlock(256, 256)(results)
     results = ResnetBlock(256, 256)(results)
     results = ResnetBlock(256, 256)(results)
     results = ResnetBlock(256, 256)(results)
     results = ResnetBlock(256, 256)(results)
-    results = ResnetBlock(256, 512, down_sample = True)(results)
+    results = ResnetBlock(256, 512, down_sample=True)(results)
     results = ResnetBlock(512, 512)(results)
     results = ResnetBlock(512, 512)(results)
-    results = tf.keras.layers.GlobalAveragePooling2D()(results) # results.shape = (batch, 512)
-    return tf.keras.Model(inputs = inputs, outputs = results, **kwargs)
+    results = tf.keras.layers.GlobalAveragePooling2D()(results)  # results.shape = (batch, 512)
+    return tf.keras.Model(inputs=inputs, outputs=results, **kwargs)
+
 
 def EmotionsRN34():
     inputs = tf.keras.Input((197, 197, 3))
-    results = ResNet34(name = 'resnet34')(inputs)
-    results = tf.keras.layers.Dense(7, activation = tf.keras.activations.softmax)(results)
-    return tf.keras.Model(inputs = inputs, outputs = results)
+    results = ResNet34(name='resnet34')(inputs)
+    results = tf.keras.layers.Dense(7, activation=tf.keras.activations.softmax)(results)
+    return tf.keras.Model(inputs=inputs, outputs=results)
 
 
 # def facial_landmarks(image, predictor):
@@ -254,6 +268,7 @@ def generator(samples, aug=False, batch_size=32, shuffle_data=True, resize=197, 
             # yield [X1, X2], y
             yield X1, y
 
+
 def old_generator(samples, predictor, aug=False, batch_size=32, shuffle_data=True, resize=197, window=None):
     """
     Yields the next training batch.
@@ -307,29 +322,31 @@ def old_generator(samples, predictor, aug=False, batch_size=32, shuffle_data=Tru
             yield [X1, X2], y
             # yield X1, y
 
+
 def image_generator(dataset, aug=False, BS=32, get_datagen=False):
     if aug:
         datagen = tf.keras.preprocessing.image.ImageDataGenerator(
-                            rescale=1./255,
-                            featurewise_center=False,
-                            featurewise_std_normalization=False,
-                            rotation_range=10,
-                            width_shift_range=0.1,
-                            height_shift_range=0.1,
-                            zoom_range=0.1,
-                            horizontal_flip=True)
+            rescale=1. / 255,
+            featurewise_center=False,
+            featurewise_std_normalization=False,
+            rotation_range=10,
+            width_shift_range=0.1,
+            height_shift_range=0.1,
+            zoom_range=0.1,
+            horizontal_flip=True)
     else:
-        datagen = tf.keras.preprocessing.image.ImageDataGenerator.ImageDataGenerator(rescale=1./255)
+        datagen = tf.keras.preprocessing.image.ImageDataGenerator.ImageDataGenerator(rescale=1. / 255)
 
     if get_datagen:
         return datagen
     return datagen.flow_from_directory(
-            dataset,
-            target_size=(197, 197),
-            color_mode='rgb',
-            shuffle = True,
-            class_mode='categorical',
-            batch_size=BS)
+        dataset,
+        target_size=(197, 197),
+        color_mode='rgb',
+        shuffle=True,
+        class_mode='categorical',
+        batch_size=BS)
+
 
 if __name__ == "__main__":
     SGD_LEARNING_RATE = 0.01
@@ -355,10 +372,10 @@ if __name__ == "__main__":
     # rn34.save('rn34.h5')
 
     rn9.compile(optimizer=sgd, loss='categorical_crossentropy', metrics=['accuracy',
-                                                                           tf.keras.metrics.Precision(name='precision'),
-                                                                           tf.keras.metrics.Recall(name='recall'),
-                                                                           F1_Score(name='f1_score'),
-                                                                           tf.keras.metrics.AUC(name='auc_roc')])
+                                                                         tf.keras.metrics.Precision(name='precision'),
+                                                                         tf.keras.metrics.Recall(name='recall'),
+                                                                         F1_Score(name='f1_score'),
+                                                                         tf.keras.metrics.AUC(name='auc_roc')])
 
     samples_train = load_filenames("C:/Users/hp/Documents/data/train")
     # samples_dev = load_filenames("C:/Users/hp/Documents/data/dev")
@@ -371,7 +388,6 @@ if __name__ == "__main__":
     train_generator = image_generator("C:/Users/hp/Documents/data/train", True)
 
     metrics = {'loss': [], 'acc': [], 'precision': [], 'recall': [], 'f1_score': [], 'auc_roc': []}
-
 
     # for ep in range(EPOCHS):
     #     history = rn9.fit_generator(
