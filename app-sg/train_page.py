@@ -2,6 +2,7 @@ import os
 import time
 
 import PySimpleGUI as sg
+import numpy as np
 import torch.optim
 import matplotlib.pyplot as plt
 
@@ -39,37 +40,53 @@ def train_epoch_pt(epoch, model, history, optimizer, train_loader, window, grad_
     train_losses = []
     stopped = False
     save = False
-    predss = []
-    labelss = []
+    # predss = []
+    # labelss = []
+    accs = []
+    f1s = []
+    recalls = []
+    precisions = []
+    auc_rocs = []
+
     i = 1
     n = len(train_loader)
     for batch in train_loader:
-        # event, values = window.read(0)
-        #
-        # if event == "Exit" or event == sg.WIN_CLOSED or event is None:
-        #     stopped = True
-        #     save = False
-        #     return history, stopped, save
-        #
-        # if event == '-CANCEL_B-':
-        #     stopped = True
-        #     save = False
-        #     return history, stopped, save
-        #
-        # if event == '-SAVE-':
-        #     stopped = True
-        #     save = True
-        #     return history, stopped, save
+        event, values = window.read(0)
+
+        if event == "Exit" or event == sg.WIN_CLOSED or event is None:
+            stopped = True
+            save = False
+            return history, stopped, save
+
+        if event == '-CANCEL_B-':
+            stopped = True
+            save = False
+            return history, stopped, save
+
+        if event == '-SAVE-':
+            stopped = True
+            save = True
+            return history, stopped, save
 
         data = model.training_step(batch)
         loss = data[0]
         preds = data[1].cpu().numpy()
         labels = data[2].cpu().numpy()
-        acc = sum(preds == labels) / len(preds)
-        sg.cprint("Batch {}/{} BATCH ACC: {:.2f}".format(i, n, acc), key="-PROGRESS TEXT TRAIN-")
+        acc_sc, f1_sc, recall_sc, precision_sc = all_scores(preds, labels)
+        accs.append(acc_sc)
+        f1s.append(f1_sc)
+        recalls.append(recall_sc)
+        precisions.append(precision_sc)
+        try:
+            ar_sc = auc_roc_sc(labels, preds)
+        except:
+            ar_sc = 0.5
+        auc_rocs.append(ar_sc)
+
+        sg.cprint("Batch {}/{} BATCH ACC: {:.2f}".format(i, n, acc_sc), key="-PROGRESS TEXT TRAIN-")
         i += 1
-        predss.extend(preds)
-        labelss.extend(labels)
+        # predss.extend(preds)
+        # labelss.extend(labels)
         train_losses.append(loss)
         loss.backward()
 
@@ -81,20 +98,21 @@ def train_epoch_pt(epoch, model, history, optimizer, train_loader, window, grad_
         optimizer.zero_grad()
 
     # Validation phase
-    print("Preds len " + str(len(predss)))
-    print("Labels len " + str(len(labelss)))
+    # print("Preds len " + str(len(predss)))
+    # print("Labels len " + str(len(labelss)))
     result = {}
     result['train_loss'] = torch.stack(train_losses).mean().item()
-    acc_sc, f1_sc, recall_sc, precision_sc = all_scores(labelss, predss)
-    result['train_acc'] = acc_sc
-    print("acc " + str(result['train_acc']))
-    result['train_f1'] = f1_sc
-    print("train_f1 " + str(result['train_f1']))
-    result['train_recall'] = recall_sc
-    print("train_recall " + str(result['train_recall']))
-    result['train_auc_roc'] = auc_roc_sc(labelss, predss)
-    print("train_auc_roc " + str(result['train_auc_roc']))
-    result['train_precision'] = precision_sc
+    # acc_sc, f1_sc, recall_sc, precision_sc = all_scores(labelss, predss)
+    result['train_acc'] = np.mean(accs)
+    # print(all_scores(labelss, predss))
+    result['train_f1'] = np.mean(f1s)
+    print("train_f1: " + str(result['train_f1']))
+    result['train_recall'] = np.mean(recalls)
+    print("train_recall: " + str(result['train_recall']))
+    result['train_auc_roc'] = np.mean(auc_rocs)
+    print("train_auc_roc: " + str(result['train_auc_roc']))
+    result['train_precision'] = np.mean(precisions)
+    print("train_precision: " + str(result['train_precision']))
     model.epoch_end(epoch, result)
     history.append(result)
     return history, stopped, save
@@ -123,22 +141,22 @@ def save_scores_plot(history, model_name, n_epochs, epoch, model_savename, is_la
 
     ax1.plot(train_losses, color='crimson')
     plt.ylabel('loss')
-    plt.legend(['binary_crossentropy'], loc='lower right')
+    plt.legend(['crossentropy_loss'], loc='lower right')
 
     ax2 = ax1.twinx()
 
-    ax2.plot(train_accs, color='dodgerblue')
     ax2.plot(train_precisions, color='limegreen')
     ax2.plot(train_recalls, color='orange')
     ax2.plot(train_f1s, color='violet')
     ax2.plot(train_auc_rocs, color='blueviolet')
+    ax2.plot(train_accs, color='dodgerblue')
     plt.ylabel('accuracy scores')
     plt.ylim([0, 1])
 
     plt.title(title)
     plt.xlabel('epoch')
     plt.xlim([0, n_epochs - 1])
-    plt.legend(['accuracy', 'precision', 'recall', 'f1_score', 'auc_roc'], loc='upper left')
+    plt.legend(['precision', 'recall', 'f1_score', 'auc_roc', 'accuracy'], loc='upper left')
     file_name = model_savename + '_(' + model_name + ').png'
     if is_last:
         file_path = os.getcwd() + '/model_scores/' + file_name
@@ -240,7 +258,8 @@ def train_loop(window, models):
             sg.cprint(f'EPOCH [{epoch}]', end='\n', key="-PROGRESS TEXT TRAIN-")
             history, stopped, save = train_epoch_pt(epoch, model, history, optimizer, train_loader, window,
                                                     grad_clip=0.2)
-            filepath = save_scores_plot(history, model_name, n_epochs, epoch, model_savename, False)
+            if len(history) > 0:
+                filepath = save_scores_plot(history, model_name, n_epochs, epoch, model_savename, False)
         if 'TensorFlow' in model_name:
             sg.cprint(f'EPOCH [{epoch}]', end='', key="-PROGRESS TEXT TRAIN-")
             callback = StopTrainingOnWindowCloseAndPause(window, tf_flags)
@@ -306,13 +325,14 @@ def train_loop(window, models):
 
         if stopped:
             if save:
-                if '(TensorFlow' in model_name:
+                if 'TensorFlow' in model_name:
                     sg.cprint("\n* Training was manually stopped", text_color='blue', key="-PROGRESS TEXT TRAIN-")
                 else:
                     sg.cprint("* Training was manually stopped", text_color='blue', key="-PROGRESS TEXT TRAIN-")
                 models[model_name] = model
-                if "(PyTorch" in model_name:
-                    temp = save_scores_plot(history, model_name, n_epochs, epoch, model_savename, True)
+                if "PyTorch" in model_name:
+                    if len(history) > 0:
+                        temp = save_scores_plot(history, model_name, n_epochs, epoch, model_savename, True)
                     model_path = os.getcwd() + "/user_models/" + model_savename + '_(' + model_name + ')' + '.pth'
                     torch.save(model.state_dict(), model_path)
                     try:
@@ -321,7 +341,7 @@ def train_loop(window, models):
                         torch.cuda.empty_cache()
                     except:
                         pass
-                elif "(TensorFlow" in model_name:
+                elif "TensorFlow" in model_name:
                     temp = save_scores_plot(tf_metrics, model_name, n_epochs, epoch, model_savename, True)
                     model_path = os.getcwd() + "/user_models/" + model_savename + '_(' + model_name + ')' + '.h5'
                     model.save_weights(model_path)
@@ -338,7 +358,7 @@ def train_loop(window, models):
                 window[f'-COL7-'].update(visible=True)
                 return models, go_menu_b
             else:
-                if '(TensorFlow' in model_name:
+                if 'TensorFlow' in model_name:
                     sg.cprint("\n* Training cancelled", text_color='red', key="-PROGRESS TEXT TRAIN-")
                     try:
                         del model
