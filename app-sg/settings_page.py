@@ -185,7 +185,7 @@ def settings_loop(window, loaded_stuff, faceCascade):
                 try:
                     im = Image.open(filepath)
                 except:
-                    pass
+                    im = Image.open('model_scores/default_transparent.png')
                 width, height = width2, height2
                 scale = max(im.width / width, im.height / height)
                 if scale > 1:
