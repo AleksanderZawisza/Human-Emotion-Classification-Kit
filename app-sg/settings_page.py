@@ -144,21 +144,21 @@ def settings_loop(window, loaded_stuff, faceCascade):
             window["-MODEL DROPDOWN-"].update(disabled=False)
             window["-MODEL DROPDOWN-"].update(values=model_list)
             window["-MODEL DROPDOWN-"].update(old_val)
-            if old_val:
-                filepath = f'model_scores/{old_val}.png'
-                try:
-                    im = Image.open(filepath)
-                except:
-                    pass
-                width, height = width2, height2
-                scale = max(im.width / width, im.height / height)
-                if scale > 1:
-                    w, h = int(im.width / scale), int(im.height / scale)
-                    im = im.resize((w, h), resample=Image.CUBIC)
-                with BytesIO() as output:
-                    im.save(output, format="PNG")
-                    data = output.getvalue()
-                window["-SETTINGS METRIC IMAGE-"].update(data=data)
+            #if old_val:
+            filepath = f'model_scores/{old_val}.png'
+            try:
+                im = Image.open(filepath)
+            except:
+                im = Image.open('model_scores/default_transparent.png')
+            width, height = width2, height2
+            scale = max(im.width / width, im.height / height)
+            if scale > 1:
+                w, h = int(im.width / scale), int(im.height / scale)
+                im = im.resize((w, h), resample=Image.CUBIC)
+            with BytesIO() as output:
+                im.save(output, format="PNG")
+                data = output.getvalue()
+            window["-SETTINGS METRIC IMAGE-"].update(data=data)
 
         elif event == "-RESNET9-" or event == "-RESNET50-":
             window["-MODEL DROPDOWN-"].update(disabled=True)
@@ -180,21 +180,21 @@ def settings_loop(window, loaded_stuff, faceCascade):
 
         if event=='-MODEL DROPDOWN-':
             val = values["-MODEL DROPDOWN-"]
-            if val:
-                filepath = f'model_scores/{val}.png'
-                try:
-                    im = Image.open(filepath)
-                except:
-                    im = Image.open('model_scores/default_transparent.png')
-                width, height = width2, height2
-                scale = max(im.width / width, im.height / height)
-                if scale > 1:
-                    w, h = int(im.width / scale), int(im.height / scale)
-                    im = im.resize((w, h), resample=Image.CUBIC)
-                with BytesIO() as output:
-                    im.save(output, format="PNG")
-                    data = output.getvalue()
-                window["-SETTINGS METRIC IMAGE-"].update(data=data)
+            #if val:
+            filepath = f'model_scores/{val}.png'
+            try:
+                im = Image.open(filepath)
+            except:
+                im = Image.open('model_scores/default_transparent.png')
+            width, height = width2, height2
+            scale = max(im.width / width, im.height / height)
+            if scale > 1:
+                w, h = int(im.width / scale), int(im.height / scale)
+                im = im.resize((w, h), resample=Image.CUBIC)
+            with BytesIO() as output:
+                im.save(output, format="PNG")
+                data = output.getvalue()
+            window["-SETTINGS METRIC IMAGE-"].update(data=data)
 
 
         if event == "-NO FACE DETECTION-":
