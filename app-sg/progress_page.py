@@ -70,15 +70,25 @@ def progress_loop(window, chosen_stuff, values, faceCascade, models, predictor):
         models['res50tf'] = load_res50tf()
         loaded_flag = False
 
-    if not res9pt and not res50tf and model_text not in models:
-        sg.cprint('* Loading model...', key="-PROGRESS TEXT-")
-        if '(TensorFlow' in model_text:
-            ext = '.h5'
-        elif '(PyTorch' in model_text:
-            ext = '.pth'
-        model_filename = model_text + ext
-        models[model_text] = load_custom_model(model_filename)
-        loaded_flag = False
+    if not res9pt and not res50tf:
+        if model_text not in models:
+            sg.cprint('* Loading model...', key="-PROGRESS TEXT-")
+            if '(TensorFlow' in model_text:
+                ext = '.h5'
+            elif '(PyTorch' in model_text:
+                ext = '.pth'
+            model_filename = model_text + ext
+            models[model_text] = load_custom_model(model_filename)
+            loaded_flag = False
+        elif not models[model_text]:
+            sg.cprint('* Loading model...', key="-PROGRESS TEXT-")
+            if '(TensorFlow' in model_text:
+                ext = '.h5'
+            elif '(PyTorch' in model_text:
+                ext = '.pth'
+            model_filename = model_text + ext
+            models[model_text] = load_custom_model(model_filename)
+            loaded_flag = False
 
     if loaded_flag:
         sg.cprint('* Model already loaded', key="-PROGRESS TEXT-")

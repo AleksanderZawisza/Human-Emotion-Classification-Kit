@@ -172,6 +172,8 @@ def train_loop(window, models):
     try:
         K.clear_session()
         torch.cuda.empty_cache()
+        del models
+        models = {}
     except:
         pass
 
