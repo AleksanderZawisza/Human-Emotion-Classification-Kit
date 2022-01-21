@@ -93,11 +93,11 @@ def settings_loop(window, loaded_stuff, faceCascade):
     cwd = os.getcwd().replace('\\', '/')
     example_path = "example_images"
 
-    filepath = 'model_scores/default_pt_resnet9.png'
+    filepath = 'default_images/default_pt_resnet9.png'
     try:
         im = Image.open(filepath)
     except:
-        pass
+        im = Image.open('default_images/default_couldnotload.png')
     width, height = 400, 140
     scale = max(im.width / width, im.height / height)
     if scale > 1:
@@ -148,7 +148,7 @@ def settings_loop(window, loaded_stuff, faceCascade):
             try:
                 im = Image.open(filepath)
             except:
-                im = Image.open('model_scores/default_transparent.png')
+                im = Image.open('default_images/default_transparent.png')
             width, height = width2, height2
             scale = max(im.width / width, im.height / height)
             if scale > 1:
@@ -162,13 +162,13 @@ def settings_loop(window, loaded_stuff, faceCascade):
         elif event == "-RESNET9-" or event == "-RESNET50-":
             window["-MODEL DROPDOWN-"].update(disabled=True)
             if event == "-RESNET9-":
-                filepath = 'model_scores/default_pt_resnet9.png'
+                filepath = 'default_images/default_pt_resnet9.png'
             else:
-                filepath = 'model_scores/default_tf_resnet50.png'
+                filepath = 'default_images/default_tf_resnet50.png'
             try:
                 im = Image.open(filepath)
             except:
-                pass
+                im = Image.open('default_images/default_couldnotload.png')
             width, height = width2, height2
             scale = max(im.width / width, im.height / height)
             if scale > 1:
@@ -186,7 +186,7 @@ def settings_loop(window, loaded_stuff, faceCascade):
             try:
                 im = Image.open(filepath)
             except:
-                im = Image.open('model_scores/default_transparent.png')
+                im = Image.open('default_images/default_transparent.png')
             width, height = width2, height2
             scale = max(im.width / width, im.height / height)
             if scale > 1:
@@ -218,13 +218,14 @@ def settings_loop(window, loaded_stuff, faceCascade):
             if os.path.isdir(filepath):
                 file_list = os.listdir(filepath)
                 file_list = [f"{filepath}/{f}" for f in file_list
-                             if os.path.isfile(f"{filepath}/{f}")]
+                             if os.path.isfile(f"{filepath}/{f}") and
+                             f.lower().endswith(('.png', '.jpg', '.jpeg', '.tiff', '.bmp'))]
                 filepath = file_list[0]
             if os.path.isfile(filepath):
                 try:
                     im = Image.open(filepath)
                 except:
-                    pass
+                    im = Image.open('default_images/default_couldnotload.png')
                 width, height = width, height
                 scale = max(im.width / width, im.height / height)
                 if scale > 1:
@@ -240,7 +241,8 @@ def settings_loop(window, loaded_stuff, faceCascade):
             if os.path.isdir(filepath):
                 file_list = os.listdir(filepath)
                 file_list = [f"{filepath}/{f}" for f in file_list
-                             if os.path.isfile(f"{filepath}/{f}")]
+                             if os.path.isfile(f"{filepath}/{f}") and
+                             f.lower().endswith(('.png', '.jpg', '.jpeg', '.tiff', '.bmp'))]
                 filepath = file_list[0]
             if os.path.isfile(filepath):
                 tmpsave = f"{tmpdirpath}/detect_test.png"
@@ -250,7 +252,7 @@ def settings_loop(window, loaded_stuff, faceCascade):
                                             scale=values['-FD1-'], minneigh=values['-FD2-'], minsize=values['-FD3-'])
                     im = Image.open(tmpsave)
                 except:
-                    pass
+                    im = Image.open('default_images/default_couldnotload.png')
                 width, height = width, height
                 scale = max(im.width / width, im.height / height)
                 if scale > 1:
