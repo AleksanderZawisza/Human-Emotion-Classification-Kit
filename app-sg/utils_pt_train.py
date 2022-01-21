@@ -11,6 +11,8 @@ from torch.utils.data import DataLoader
 from sklearn.metrics import roc_auc_score, classification_report
 from sklearn.preprocessing import OneHotEncoder
 
+import PySimpleGUI as sg
+
 
 def auc_roc_sc(labels, preds):
     enc = OneHotEncoder(sparse=False)
@@ -59,9 +61,9 @@ class ImageClassificationBase(nn.Module):
         epoch_acc = torch.stack(batch_accs).mean()
         return {'val_loss': epoch_loss.item(), 'val_acc': epoch_acc.item()}
 
-    def epoch_end(self, epoch, result):
-        print("Epoch [{}], train_loss: {:.3f}, train_acc: {:.3f}".format(
-            epoch, result['train_loss'], result['train_acc']))
+    # def epoch_end(self, epoch, result):
+    #     print("Epoch [{}], train_loss: {:.3f}, train_acc: {:.3f}".format(
+    #         epoch, result['train_loss'], result['train_acc']))
 
 
 class ResNet(ImageClassificationBase):  # ResNet9
@@ -266,6 +268,6 @@ def make_train_loader_pt(data_dir, batch_size):
                              tt.RandomRotation(30),
                              tt.ToTensor()])
     train_ds = ImageFolder(data_dir, train_tfms)
-    train_dl = DataLoader(train_ds, batch_size, shuffle=True, num_workers=2, pin_memory=True)
+    train_dl = DataLoader(train_ds, batch_size, shuffle=True, num_workers=0, pin_memory=True)
     train_dl = DeviceDataLoader(train_dl, device)
     return train_dl, device

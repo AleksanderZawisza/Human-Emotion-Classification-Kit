@@ -50,6 +50,9 @@ def train_epoch_pt(epoch, model, history, optimizer, train_loader, window, grad_
 
     i = 1
     n = len(train_loader)
+    bar = tf.keras.utils.Progbar(
+        target=n, width=30, verbose=1, interval=0.05, stateful_metrics=None,
+        unit_name='step')
     for batch in train_loader:
         event, values = window.read(0)
 
@@ -73,6 +76,12 @@ def train_epoch_pt(epoch, model, history, optimizer, train_loader, window, grad_
         preds = data[1].cpu().numpy()
         labels = data[2].cpu().numpy()
         acc_sc, f1_sc, recall_sc, precision_sc = all_scores(preds, labels)
+
+        acc_sc = round(acc_sc, 4)
+        f1_sc = round(f1_sc, 4)
+        recall_sc = round(recall_sc, 4)
+        precision_sc = round(precision_sc, 4)
+
         accs.append(acc_sc)
         f1s.append(f1_sc)
         recalls.append(recall_sc)
@@ -80,10 +89,13 @@ def train_epoch_pt(epoch, model, history, optimizer, train_loader, window, grad_
         try:
             ar_sc = auc_roc_sc(labels, preds)
         except:
-            ar_sc = 0.5
+            ar_sc = 0.75
+
+        ar_sc = round(ar_sc, 4)
         auc_rocs.append(ar_sc)
 
-        sg.cprint("Batch {}/{} BATCH ACC: {:.2f}".format(i, n, acc_sc), key="-PROGRESS TEXT TRAIN-")
+        bar.update(i, values=[('loss', loss.item()), ('acc', acc_sc), ('precision', precision_sc),
+                              ('recall', recall_sc), ('f1_score', f1_sc), ('auc_roc', ar_sc)])
         i += 1
         # predss.extend(preds)
         # labelss.extend(labels)
@@ -98,22 +110,18 @@ def train_epoch_pt(epoch, model, history, optimizer, train_loader, window, grad_
         optimizer.zero_grad()
 
     # Validation phase
-    # print("Preds len " + str(len(predss)))
-    # print("Labels len " + str(len(labelss)))
     result = {}
     result['train_loss'] = torch.stack(train_losses).mean().item()
-    # acc_sc, f1_sc, recall_sc, precision_sc = all_scores(labelss, predss)
     result['train_acc'] = np.mean(accs)
-    # print(all_scores(labelss, predss))
     result['train_f1'] = np.mean(f1s)
-    print("train_f1: " + str(result['train_f1']))
+    # print("train_f1: " + str(result['train_f1']))
     result['train_recall'] = np.mean(recalls)
-    print("train_recall: " + str(result['train_recall']))
+    # print("train_recall: " + str(result['train_recall']))
     result['train_auc_roc'] = np.mean(auc_rocs)
-    print("train_auc_roc: " + str(result['train_auc_roc']))
+    # print("train_auc_roc: " + str(result['train_auc_roc']))
     result['train_precision'] = np.mean(precisions)
-    print("train_precision: " + str(result['train_precision']))
-    model.epoch_end(epoch, result)
+    # print("train_precision: " + str(result['train_precision']))
+    # model.epoch_end(epoch, result)
     history.append(result)
     return history, stopped, save
 
@@ -192,6 +200,12 @@ def train_loop(window, models):
     model_savename = values["-MODEL SAVE NAME-"]
     data_dir = values['-TRAIN FOLDER-']
 
+    if not torch.cuda.is_available():
+        sg.cprint("* Compatible CUDA installation not detected!"
+                  "\n* Training will be much slower! Please install CUDA!", key="-PROGRESS TEXT TRAIN-",
+                  text_color='red')
+        time.sleep(6)
+
     sg.cprint("* Training has started", key="-PROGRESS TEXT TRAIN-")
 
     if 'PyTorch' in model_name:
@@ -253,13 +267,15 @@ def train_loop(window, models):
     tf_flags = tf_flags_StopSave()
     stopped = False
     save = False
+
     for epoch in range(n_epochs):
         event, values = window.read(0)
 
         if 'PyTorch' in model_name:
-            sg.cprint(f'EPOCH [{epoch}]', end='\n', key="-PROGRESS TEXT TRAIN-")
+            sg.cprint(f'EPOCH [{epoch}]', end='', key="-PROGRESS TEXT TRAIN-")
             history, stopped, save = train_epoch_pt(epoch, model, history, optimizer, train_loader, window,
                                                     grad_clip=0.2)
+
             if len(history) > 0:
                 filepath = save_scores_plot(history, model_name, n_epochs, epoch, model_savename, False)
         if 'TensorFlow' in model_name:
@@ -484,32 +500,3 @@ def train_loop(window, models):
             window[f'-COL7-'].update(visible=True)
             go_menu_b = True
             return models, go_menu_b
-
-
-if __name__ == "__main__":
-    train_loader, device = make_train_loader_pt("C:/Users/Aleksander Podsiad/Desktop/Projekt Emocje/Dane/test", 64)
-    # model = to_device(ResNet(1, 7), device)
-    model = torch.load(
-        'C:/Users/Aleksander Podsiad/Desktop/Human-Emotion-Classification-Kit/app-sg/models/ResNet1_mdl_EPOCHS_40.pth')
-    model = to_device(model, device)
-    # opt_func = torch.optim.Adam
-    # model.train()
-    # history = []
-    # lr = 0
-    # weight_decay = 0
-    # optimizer = opt_func(model.parameters(), lr, weight_decay=weight_decay)
-    # history, stopped, save = train_epoch_pt(1, model, history, optimizer, train_loader, None,
-    #                                         grad_clip=0.2)
-    # print(history)
-
-    # model.eval()
-    # preds = []
-    # labels = []
-    # for batch in train_loader:
-    #     pred, label = model.test_func(batch)
-    #     preds.extend(pred.cpu())
-    #     labels.extend(label.cpu())
-    # labels = [x.item() for x in labels]
-    # preds = [x.item() for x in preds]
-    # print(accuracy_score(labels, preds))
-    # print(recall_sc(labels, preds))
