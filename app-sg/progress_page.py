@@ -60,15 +60,25 @@ def progress_loop(window, chosen_stuff, values, faceCascade, models, predictor):
     window['-PROGRESS BAR-'].update(i, steps)
 
     loaded_flag = True
-    if res9pt and not models['res9pt']:
-        sg.cprint('* Loading model...', key="-PROGRESS TEXT-")
-        models['res9pt'] = load_res9pt()
-        loaded_flag = False
+    if res9pt:
+        if 'res9pt' not in models:
+            sg.cprint('* Loading model...', key="-PROGRESS TEXT-")
+            models['res9pt'] = load_res9pt()
+            loaded_flag = False
+        elif not models['res9pt']:
+            sg.cprint('* Loading model...', key="-PROGRESS TEXT-")
+            models['res9pt'] = load_res9pt()
+            loaded_flag = False
 
-    if res50tf and not models['res50tf']:
-        sg.cprint('* Loading model...', key="-PROGRESS TEXT-")
-        models['res50tf'] = load_res50tf()
-        loaded_flag = False
+    if res50tf:
+        if 'res50tf' not in models:
+            sg.cprint('* Loading model...', key="-PROGRESS TEXT-")
+            models['res50tf'] = load_res50tf()
+            loaded_flag = False
+        elif not models['res50tf']:
+            sg.cprint('* Loading model...', key="-PROGRESS TEXT-")
+            models['res50tf'] = load_res50tf()
+            loaded_flag = False
 
     if not res9pt and not res50tf:
         if model_text not in models:
