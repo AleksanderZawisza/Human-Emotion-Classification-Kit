@@ -343,10 +343,7 @@ def train_loop(window, models):
 
         if stopped:
             if save:
-                if 'TensorFlow' in model_name:
-                    sg.cprint("\n* Training was manually stopped", text_color='blue', key="-PROGRESS TEXT TRAIN-")
-                else:
-                    sg.cprint("* Training was manually stopped", text_color='blue', key="-PROGRESS TEXT TRAIN-")
+                sg.cprint("\n* Training was manually stopped", text_color='blue', key="-PROGRESS TEXT TRAIN-")
                 models[model_name] = model
                 if "PyTorch" in model_name:
                     if len(history) > 0:
@@ -376,8 +373,8 @@ def train_loop(window, models):
                 window[f'-COL7-'].update(visible=True)
                 return models, go_menu_b
             else:
+                sg.cprint("\n* Training cancelled", text_color='red', key="-PROGRESS TEXT TRAIN-")
                 if 'TensorFlow' in model_name:
-                    sg.cprint("\n* Training cancelled", text_color='red', key="-PROGRESS TEXT TRAIN-")
                     try:
                         del model
                         del train_generator
@@ -385,7 +382,6 @@ def train_loop(window, models):
                     except:
                         pass
                 else:
-                    sg.cprint("* Training cancelled", text_color='red', key="-PROGRESS TEXT TRAIN-")
                     try:
                         del model
                         del train_loader
