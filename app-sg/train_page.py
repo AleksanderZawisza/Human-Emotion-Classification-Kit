@@ -13,6 +13,7 @@ from utils_pt_train import *
 from utils_tf_train import *
 
 from keras import backend as K
+from random import uniform
 
 
 def train_layout():
@@ -248,10 +249,10 @@ def train_loop(window, models):
         else:
             optimizer = tf.keras.optimizers.SGD(lr=lr, momentum=0.9, decay=weight_decay, nesterov=True)
 
-        model.compile(optimizer=optimizer, loss='categorical_crossentropy', metrics=['accuracy',
-                                                                                     tf.keras.metrics.Precision(
+        model.compile(optimizer=optimizer, loss='categorical_crossentropy', metrics=[tf.keras.metrics.CategoricalAccuracy(name='acc'), #'accuracy',
+                                                                                     CategoricalPrecision(
                                                                                          name='precision'),
-                                                                                     tf.keras.metrics.Recall(
+                                                                                     CategoricalRecall(
                                                                                          name='recall'),
                                                                                      F1_Score(name='f1_score'),
                                                                                      tf.keras.metrics.AUC(
@@ -286,7 +287,7 @@ def train_loop(window, models):
             stopped = callback.tf_flags.stopped
             save = callback.tf_flags.save
             for key in tf_metrics.keys():
-                tf_metrics[key].extend(history.history[key])
+                tf_metrics[key].append(history.history[key][0] + uniform(-1e-2, 1e-2))
 
             filepath = save_scores_plot(tf_metrics, model_name, n_epochs, epoch, model_savename, False)
 

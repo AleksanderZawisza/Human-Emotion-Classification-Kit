@@ -34,16 +34,16 @@ def train_settings_layout():
                                        circle_color='blue')]],
                             border_width=0, )],
                   [sg.Frame('Optimizer Learning rate:',
-                            [[sg.Slider((0.001, 0.3), orientation='horizontal', resolution=0.001, pad=((0, 0), (0, 5)),
+                            [[sg.Slider((0.0001, 0.1), orientation='horizontal', resolution=0.0001, pad=((0, 0), (0, 5)),
                                         default_value=0.001, relief=sg.RELIEF_FLAT, trough_color='#e3e3e3',
                                         key="-LR-",
                                         size=(25, 16))]],
                             border_width=0)],
                   [sg.Frame('Optimizer Decay:',
-                            [[sg.Slider((0, 0.1), orientation='horizontal', resolution=0.001, pad=((0, 0), (0, 5)),
+                            [[sg.Slider((0, 0.1), orientation='horizontal', resolution=0.0001, pad=((0, 0), (0, 5)),
                                         default_value=0, relief=sg.RELIEF_FLAT, trough_color='#e3e3e3', key="-DECAY-",
                                         size=(25, 16))]],
-                            border_width=0)],
+                            border_width=0, key='-DECAY FRAME-')],
                   [sg.Frame('Epochs:',
                             [[sg.Slider((1, 300), orientation='horizontal', resolution=1, pad=((0, 0), (0, 5)),
                                         default_value=30, relief=sg.RELIEF_FLAT, trough_color='#e3e3e3', key="-EPOCHS-",
@@ -101,12 +101,14 @@ def train_settings_loop(window, models, train_choice):
                                                         'TensorFlow_ResNet34',
                                                         'TensorFlow_ResNet50',])
             window['-TRAIN DROPDOWN-'].update('TensorFlow_ResNet9')
+            window['-DECAY FRAME-'].update('Optimizer LR Decay')
         elif train_choice == 'PyTorch':
             window['-TRAIN DROPDOWN-'].update(values=['PyTorch_ResNet9',
                                                         'PyTorch_ResNet18',
                                                         'PyTorch_ResNet34',
                                                         'PyTorch_ResNet50',])
             window['-TRAIN DROPDOWN-'].update('PyTorch_ResNet9')
+            window['-DECAY FRAME-'].update('Optimizer Weight Decay')
         else:
             back_event(window)
             return models, train_choice

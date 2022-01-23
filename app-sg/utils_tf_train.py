@@ -5,6 +5,8 @@ import cv2
 import os
 import PySimpleGUI as sg
 import dlib
+from keras import backend as K
+from sklearn.metrics import roc_auc_score, classification_report
 
 
 class tf_flags_StopSave():
@@ -34,13 +36,101 @@ class StopTrainingOnWindowCloseAndPause(tf.keras.callbacks.Callback):
                 self.tf_flags.save = True
 
 
+# def all_scores(labels, preds):
+#     report = classification_report(labels, preds, digits=3, output_dict=True)
+#     acc_sc = report['accuracy']
+#     f1_sc = report['macro avg']['f1-score']
+#     recall_sc = report['macro avg']['recall']
+#     precision_sc = report['macro avg']['precision']
+#     return acc_sc, f1_sc, recall_sc, precision_sc
+
+
+class CategoricalPrecision(tf.keras.metrics.Metric):
+    def __init__(self, name='precision', **kwargs):
+        super().__init__(name=name, **kwargs)
+        self.prec = self.add_weight(name='prec', initializer='zeros')
+        self.precision_fn0 = tf.keras.metrics.Precision(class_id=0)
+        self.precision_fn1 = tf.keras.metrics.Precision(class_id=1)
+        self.precision_fn2 = tf.keras.metrics.Precision(class_id=2)
+        self.precision_fn3 = tf.keras.metrics.Precision(class_id=3)
+        self.precision_fn4 = tf.keras.metrics.Precision(class_id=4)
+        self.precision_fn5 = tf.keras.metrics.Precision(class_id=5)
+        self.precision_fn6 = tf.keras.metrics.Precision(class_id=6)
+
+    def update_state(self, y_true, y_pred, sample_weight=None):
+        y_pred = K.one_hot(K.argmax(y_pred), num_classes=7)
+        p0 = self.precision_fn0(y_true, y_pred)
+        p1 = self.precision_fn1(y_true, y_pred)
+        p2 = self.precision_fn2(y_true, y_pred)
+        p3 = self.precision_fn3(y_true, y_pred)
+        p4 = self.precision_fn4(y_true, y_pred)
+        p5 = self.precision_fn5(y_true, y_pred)
+        p6 = self.precision_fn6(y_true, y_pred)
+        # since prec is a variable, we use assign
+        self.prec.assign((p0+p1+p2+p3+p4+p5+p6)/7)
+
+    def result(self):
+        return self.prec
+
+    def reset_states(self):
+        # we also need to reset the state of the precision and recall objects
+        self.precision_fn0.reset_states()
+        self.precision_fn1.reset_states()
+        self.precision_fn2.reset_states()
+        self.precision_fn3.reset_states()
+        self.precision_fn4.reset_states()
+        self.precision_fn5.reset_states()
+        self.precision_fn6.reset_states()
+        self.prec.assign(0)
+
+class CategoricalRecall(tf.keras.metrics.Metric):
+    def __init__(self, name='recall', **kwargs):
+        super().__init__(name=name, **kwargs)
+        self.rec = self.add_weight(name='rec', initializer='zeros')
+        self.recall_fn0 = tf.keras.metrics.Recall(class_id=0)
+        self.recall_fn1 = tf.keras.metrics.Recall(class_id=1)
+        self.recall_fn2 = tf.keras.metrics.Recall(class_id=2)
+        self.recall_fn3 = tf.keras.metrics.Recall(class_id=3)
+        self.recall_fn4 = tf.keras.metrics.Recall(class_id=4)
+        self.recall_fn5 = tf.keras.metrics.Recall(class_id=5)
+        self.recall_fn6 = tf.keras.metrics.Recall(class_id=6)
+
+    def update_state(self, y_true, y_pred, sample_weight=None):
+        y_pred = K.one_hot(K.argmax(y_pred), num_classes=7)
+        r0 = self.recall_fn0(y_true, y_pred)
+        r1 = self.recall_fn1(y_true, y_pred)
+        r2 = self.recall_fn2(y_true, y_pred)
+        r3 = self.recall_fn3(y_true, y_pred)
+        r4 = self.recall_fn4(y_true, y_pred)
+        r5 = self.recall_fn5(y_true, y_pred)
+        r6 = self.recall_fn6(y_true, y_pred)
+        # since rec is a variable, we use assign
+        self.rec.assign((r0+r1+r2+r3+r4+r5+r6)/7)
+
+    def result(self):
+        return self.rec
+
+    def reset_states(self):
+        # we also need to reset the state of the precision and recall objects
+        self.recall_fn0.reset_states()
+        self.recall_fn1.reset_states()
+        self.recall_fn2.reset_states()
+        self.recall_fn3.reset_states()
+        self.recall_fn4.reset_states()
+        self.recall_fn5.reset_states()
+        self.recall_fn6.reset_states()
+        self.rec.assign(0)
+
+
 class F1_Score(tf.keras.metrics.Metric):
 
     def __init__(self, name='f1_score', **kwargs):
         super().__init__(name=name, **kwargs)
         self.f1 = self.add_weight(name='f1', initializer='zeros')
-        self.precision_fn = tf.keras.metrics.Precision(thresholds=0.5)
-        self.recall_fn = tf.keras.metrics.Recall(thresholds=0.5)
+        # self.precision_fn = tf.keras.metrics.Precision(class_id=6)
+        # self.recall_fn = tf.keras.metrics.Recall(class_id=6)
+        self.precision_fn = CategoricalPrecision()
+        self.recall_fn = CategoricalRecall()
 
     def update_state(self, y_true, y_pred, sample_weight=None):
         p = self.precision_fn(y_true, y_pred)
