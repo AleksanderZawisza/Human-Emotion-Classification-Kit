@@ -7,6 +7,7 @@ Do własnej kompilacji aplikacji potrzebne jest dodatkowo archiwum dostępne pod
 Skompilowana aplikacja znajduje się pod linkiem: https://drive.google.com/file/d/1_wKxBY3REqbCX89Nsb106CsaHWnuIzvd/view?usp=sharing
 
 Zbiór testowy (KDEF) do uruchomienia próbnego treningu w aplikacji: https://drive.google.com/file/d/1GP2wnpXCkO6vkODPIzikjkSwujh0afSy/view?usp=sharing
+
 Autorzy na życzenie udostępniają również zbiór treningowy zawierający 32224 zdjęcia ze zbiorów CK+ i FER13.
 
 Wymagania: System Windows 10 64-bit
